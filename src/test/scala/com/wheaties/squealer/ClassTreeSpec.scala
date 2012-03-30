@@ -11,7 +11,7 @@ class ConstructorTreeSpec extends Specification{
     val tree = ConstructorTree("yo", Nil)
 
     "make an empty constructor list" in{
-      treeToString(tree) must be_==("case class yo")
+      treeToString(tree.tree) must be_==("case class yo")
     }
   }
 
@@ -19,12 +19,12 @@ class ConstructorTreeSpec extends Specification{
 
     "make a non-empty constructor list" in{
       val tree = ConstructorTree("Yo", ColumnDef("hey", "String", None) :: Nil)
-      treeToString(tree) must be_==("case class Yo(hey: String)")
+      treeToString(tree.tree) must be_==("case class Yo(hey: String)")
     }
 
     "handle default arguments" in{
       val tree = ConstructorTree("Yo", ColumnDef("hey", "String", Some("Hello")) :: Nil)
-      treeToString(tree) must be_==("case class Yo(hey: String = \"Hello\")")
+      treeToString(tree.tree) must be_==("case class Yo(hey: String = \"Hello\")")
     }
   }
 
@@ -34,7 +34,7 @@ class ConstructorTreeSpec extends Specification{
 
     "make a non-empty constructor list" in{
       val tree = ConstructorTree("Yo", columns.toList)
-      treeToString(tree) must be_==("class Yo(a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int, k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int, u: Int, v: Int, w: Int)")
+      treeToString(tree.tree) must be_==("class Yo(val a: Int, val b: Int, val c: Int, val d: Int, val e: Int, val f: Int, val g: Int, val h: Int, val i: Int, val j: Int, val k: Int, val l: Int, val m: Int, val n: Int, val o: Int, val p: Int, val q: Int, val r: Int, val s: Int, val t: Int, val u: Int, val v: Int, val w: Int)")
     }
   }
 }

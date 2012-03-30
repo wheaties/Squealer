@@ -5,9 +5,9 @@ import definitions._
 import treehuggerDSL._
 import scala.annotation._
 
-object PureTable extends (TableTree => Tree){
+object PureTable extends (Table => Tree){
 
-  def apply(table: TableTree) ={
+  def apply(table: Table) ={
     val copy = if(table.columnCount < 23) Nil else CopyTree(table.name, table.columns) :: Nil
     val body = if(table.hasPrimaryKey){
       HashCodeTree(table.columns) :: EqualsTree(table.name, table.columns) :: Nil

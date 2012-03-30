@@ -3,25 +3,25 @@ package com.wheaties.squealer
 import java.sql.Types._
 import java.sql.{DriverManager, DatabaseMetaData}
 
-object ParseDataSource extends ((String,String,String) => DatabaseTree){
-  def apply(url: String, account: String, password: String):DatabaseTree = {
+object ParseDataSource extends ((String,String,String) => Database){
+  def apply(url: String, account: String, password: String):Database = {
     val connection = DriverManager.getConnection(url, account, password)
     try{
       val tables = parseTables(connection.getMetaData)
 
-      DatabaseTree(url, tables)
+      Database(url, tables)
     }
     finally{
       connection.close()
     }
   }
 
-  protected def parseTables(meta: DatabaseMetaData):List[TableTree] ={
+  protected def parseTables(meta: DatabaseMetaData):List[Table] ={
     val tables = meta.getTables(null, null, null, null)
-    val tableBuilder = List.newBuilder[TableTree]
+    val tableBuilder = List.newBuilder[Table]
     while(tables.next()){
       val tableName = tables.getString("TABLE_NAME")
-      tableBuilder += TableTree( tableName, parseColumns(meta, tableName))
+      tableBuilder += Table( tableName, parseColumns(meta, tableName))
     }
 
     tableBuilder.result()
