@@ -30,6 +30,7 @@ object ObjectTree extends ((String,List[Column]) => Tree){
     make(params, Nil)
   }
 
+  //Don't hate me 'cause I'm using stringly types here
   protected def function(name: String, typeOf: String) = if(typeOf == "Array[Byte]"){
     REF("result") DOT("getBytes") APPLY REF(name)
   }
