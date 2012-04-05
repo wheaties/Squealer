@@ -1,9 +1,7 @@
 package com.wheaties.squealer
 
 import treehugger.forest._
-import definitions._
 import treehuggerDSL._
-import scala.annotation._
 
 object PureTable extends (Table => Tree){
 

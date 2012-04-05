@@ -1,30 +1,30 @@
 package com.wheaties.squealer
 
-import collection.JavaConversions.{JMapWrapper, JListWrapper, JSetWrapper}
+import collection.JavaConversions.JListWrapper
 import com.typesafe.config.{Config, ConfigFactory}
 
 case class StatementDefinition(pack: String, name: String, statement: String)
-case class DatabaseStatements(connection: String, user: String, password: String, statements: List[StatementDefinition])
+case class DatabaseStatements(url: String, user: String, password: String, statements: List[StatementDefinition])
 
 object ConfigParser extends (String => DatabaseStatements){
   val PACKAGE = "package"
   val CLASS_NAME = "class_name"
   val SQL_STATEMENT = "sql_statement"
-  val CONNECTION = "connection"
+  val URL = "url"
   val PASSWORD = "password"
   val USER = "user"
   val GROUPS = "groups"
 
-  def apply(fileName: String) = {
-    val config = ConfigFactory.load(fileName)
-    val groups = config.getConfigList(GROUPS)
+  def apply(fileName: String) = parseConfig(ConfigFactory.load(fileName))
 
+  protected def parseConfig(config: Config) ={
     val statements = for{
-      entry <- JListWrapper(groups).toList
+      entry <- JListWrapper(config.getConfigList(GROUPS)).toList
       statement <- unpackGroup(entry)
     } yield statement
 
-    DatabaseStatements(config.getString(CONNECTION), config.getString(USER), config.getString(PASSWORD), statements)
+    val strings = config.getString _
+    DatabaseStatements(strings(URL), strings(USER), strings(PASSWORD), statements)
   }
 
   protected def unpackGroup(config: Config)= try{
