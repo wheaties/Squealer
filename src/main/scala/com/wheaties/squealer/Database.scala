@@ -25,9 +25,4 @@ case class PrimaryKeyDef(name: String, typeOf: String, default: Option[String]) 
 case class NullablePrimaryKey(name: String, typeOf: String) extends Column
 
 case class Database(name: String, tables: List[Table])
-case class Table(name: String, columns: List[Column]){
-  val hasPrimaryKey ={
-    columns.exists(_.isInstanceOf[PrimaryKeyDef]) || columns.exists(_.isInstanceOf[NullablePrimaryKey])
-  }
-  def columnCount = columns.size
-}
+case class Table(name: String, columns: List[Column])
