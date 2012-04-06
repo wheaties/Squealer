@@ -1,22 +1,25 @@
 package com.wheaties.squealer
 
 import java.sql.Types._
-import java.sql.{DriverManager, DatabaseMetaData}
+import java.sql.{Connection, DriverManager, DatabaseMetaData}
 
 object ParseDataSource extends ((String,String,String) => Database){
-  def apply(url: String, account: String, password: String):Database = {
+  def apply(url: String, account: String, password: String):Database ={
     val connection = DriverManager.getConnection(url, account, password)
-    try{
-      val tables = parseTables(connection.getMetaData)
 
-      Database(url, tables)
-    }
-    finally{
-      connection.close()
-    }
+    parseDatabase(url, connection)
   }
 
-  protected def parseTables(meta: DatabaseMetaData):List[Table] ={
+  protected[squealer] def parseDatabase(url: String, connection: Connection) = try{
+    val tables = parseTables(connection.getMetaData)
+
+    Database(url, tables)
+  }
+  finally{
+    connection.close()
+  }
+
+  protected[squealer] def parseTables(meta: DatabaseMetaData):List[Table] ={
     val tables = meta.getTables(null, null, null, null)
     val tableBuilder = List.newBuilder[Table]
     while(tables.next()){
@@ -27,7 +30,7 @@ object ParseDataSource extends ((String,String,String) => Database){
     tableBuilder.result()
   }
 
-  protected def parsePrimaryKeys(meta: DatabaseMetaData, tableName: String):Set[String] ={
+  protected[squealer] def parsePrimaryKeys(meta: DatabaseMetaData, tableName: String):Set[String] ={
     val keysMeta = meta.getPrimaryKeys(null, null, tableName)
     val keysBuilder = Set.newBuilder[String]
     while(keysMeta.next()){
@@ -38,7 +41,7 @@ object ParseDataSource extends ((String,String,String) => Database){
   }
 
   //TODO: there's a lot of D-R-Y violations.
-  protected def parseColumns(meta: DatabaseMetaData, tableName: String):List[Column] ={
+  protected[squealer] def parseColumns(meta: DatabaseMetaData, tableName: String):List[Column] ={
     val keys = parsePrimaryKeys(meta, tableName)
 
     val columns = meta.getColumns(null, null, tableName, null)
