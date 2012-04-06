@@ -37,6 +37,7 @@ object ParseDataSource extends ((String,String,String) => Database){
     keysBuilder.result()
   }
 
+  //TODO: there's a lot of D-R-Y violations.
   protected def parseColumns(meta: DatabaseMetaData, tableName: String):List[Column] ={
     val keys = parsePrimaryKeys(meta, tableName)
 
@@ -54,6 +55,7 @@ object ParseDataSource extends ((String,String,String) => Database){
         case _ => ColumnDef(name, typeOf, default)
       }
 
+      //following Oracle mapping guide: http://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/getstart/mapping.html
       val column = columns.getInt("DATA_TYPE") match{
         case BIGINT => create("Long")
         case DOUBLE | FLOAT => create("Double")
