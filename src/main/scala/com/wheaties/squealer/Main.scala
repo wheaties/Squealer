@@ -2,8 +2,11 @@ package com.wheaties.squealer
 
 import com.wheaties.squealer.Implicits._
 
-class Main extends Squealer{
-  def main(args: Array[String]) = action()
+//TODO: By Monday, 16th. Get comments working and make sure pure table works.
+object Main extends Squealer{
+  def main(args: Array[String]){
+    action()
+  }
 }
 
 /*

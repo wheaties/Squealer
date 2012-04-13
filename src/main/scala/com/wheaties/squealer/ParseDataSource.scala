@@ -42,6 +42,11 @@ object ParseDataSource extends ((String,String,String) => Database){
     keysBuilder.result()
   }
 
+  /**
+   * TODO: Columns can have constraints. They can be limited to a set, a range or computed.
+   * Think about how to capture it. Computed columns are generally values within the same row.
+   */
+
   //TODO: by request, pull out the remarks for each column and add in to pure table
   //TODO: there's a lot of D-R-Y violations.
   protected[squealer] def parseColumns(meta: DatabaseMetaData, tableName: String):List[Column] ={
