@@ -3,6 +3,8 @@ package com.wheaties.squealer
 import treehugger.forest._
 import treehuggerDSL._
 
+//TODO: add in object companions to this part
+
 object PureTable extends (Table => Tree){
   def apply(table: Table) = ToTree(table.name, table.columns)
 }
@@ -18,6 +20,7 @@ object ImpureTable extends (Clazz => Tree){
   }
 }
 
+//TODO: why don't regular classes have hashCode and equals!?
 object ToTree extends ((String, List[Column]) => ClassDef){
   def apply(name: String, columns: List[Column]):ClassDef ={
     val copy = if(columns.size < 23) Nil else CopyTree(name, columns) :: Nil

@@ -5,6 +5,8 @@ import definitions._
 import treehuggerDSL._
 import scala.annotation._
 
+//TODO: some column names cn have spaces! @#$% me.
+
 object ConstructorTree {
   def apply(name: String, params: List[Column]):ClassDefStart ={
     val start = if(params.size < 23) CASECLASSDEF(name) else CLASSDEF(name)

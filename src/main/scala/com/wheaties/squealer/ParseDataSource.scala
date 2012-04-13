@@ -19,6 +19,8 @@ object ParseDataSource extends ((String,String,String) => Database){
     connection.close()
   }
 
+  //TODO: by request, pull out the remarks for each table and add in to pure table constructs
+  //TODO: perhaps also include a description of the indexes on each table
   protected[squealer] def parseTables(meta: DatabaseMetaData):List[Table] ={
     val tables = meta.getTables(null, null, null, null)
     val tableBuilder = List.newBuilder[Table]
@@ -40,6 +42,7 @@ object ParseDataSource extends ((String,String,String) => Database){
     keysBuilder.result()
   }
 
+  //TODO: by request, pull out the remarks for each column and add in to pure table
   //TODO: there's a lot of D-R-Y violations.
   protected[squealer] def parseColumns(meta: DatabaseMetaData, tableName: String):List[Column] ={
     val keys = parsePrimaryKeys(meta, tableName)
