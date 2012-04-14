@@ -106,16 +106,16 @@ class EqualsTreeSpec extends Specification{
     val noKeys = ColumnDef("a", "Int", None) :: Nil
 
     "throw an exception at runtime" in{
-      EqualsTree("Foo", noKeys) must throwA[UnsupportedOperationException]
+      EqualsTree("Foo", noKeys) must be_==(EmptyTree)
     }
 
     "create an empty list of pattern matching args" in{
-      val tree = EqualsTree.pattern(noKeys, Nil)
+      val tree = EqualsTree.pattern(noKeys)
       treeToString(tree) must be_==("List(Ident(_))")
     }
 
     "throw an exception at runtime when envoking make" in{
-      EqualsTree.make(noKeys, Nil) must throwA[UnsupportedOperationException]
+      EqualsTree.withKeys(noKeys) must throwA[UnsupportedOperationException]
     }
   }
 
@@ -128,12 +128,12 @@ class EqualsTreeSpec extends Specification{
     }
 
     "create a list of one pattern matching argument" in{
-      val tree = EqualsTree.pattern(keys, Nil)
+      val tree = EqualsTree.pattern(keys)
       treeToString(tree) must be_==("List(Ident(a))")
     }
 
     "create a list of one check" in{
-      val tree = EqualsTree.make(keys, Nil)
+      val tree = EqualsTree.withKeys(keys)
       treeToString(tree) must be_==("this.a eq that.a")
     }
   }
@@ -147,12 +147,12 @@ class EqualsTreeSpec extends Specification{
     }
 
     "create a list of one pattern matching argument" in{
-      val tree = EqualsTree.pattern(keys, Nil)
+      val tree = EqualsTree.pattern(keys)
       treeToString(tree) must be_==("List(Ident(a), Ident(b))")
     }
 
     "create a list of one check" in{
-      val tree = EqualsTree.make(keys, Nil)
+      val tree = EqualsTree.withKeys(keys)
       treeToString(tree) must be_==("(this.b eq that.b) && (this.a eq that.a)")
     }
   }
@@ -166,12 +166,12 @@ class EqualsTreeSpec extends Specification{
     }
 
     "create a list of one pattern matching argument" in{
-      val tree = EqualsTree.pattern(keys, Nil)
+      val tree = EqualsTree.pattern(keys)
       treeToString(tree) must be_==("List(Ident(a), Ident(_))")
     }
 
     "create a list of one check" in{
-      val tree = EqualsTree.make(keys, Nil)
+      val tree = EqualsTree.withKeys(keys)
       treeToString(tree) must be_==("this.a eq that.a")
     }
   }

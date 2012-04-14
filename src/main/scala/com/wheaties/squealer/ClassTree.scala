@@ -94,21 +94,24 @@ object HashCodeTree extends (List[Column] => Tree){
 
 object EqualsTree extends ((String, List[Column]) => Tree){
   def apply(tableName: String, params: List[Column]) ={
-    DEF("equals") withFlags(Flags.OVERRIDE) withParams(PARAM("that", "Any")) := REF("that") MATCH{
-      make(tableName, params)
-    }
-  }
-
-  def make(tableName: String, params: List[Column]):List[CaseDef] ={
     if(params.exists(col => col.isInstanceOf[PrimaryKeyDef] || col.isInstanceOf[NullablePrimaryKey])){
-      makeWithKeys(tableName, params)
+      defineEquals(makeWithKeys(tableName, params))
+    }
+    else if(params.size > 22){
+      defineEquals(makeWithoutKeys(tableName, params))
     }
     else{
-      makeWithoutKeys(tableName, params)
+      EmptyTree
     }
   }
 
-  private[squealer] def makeWithKeys(tableName: String, params: List[Column]) ={
+  private[squealer] def defineEquals(made: List[CaseDef]) ={
+    DEF("equals") withFlags(Flags.OVERRIDE) withParams(PARAM("that", "Any")) := REF("that") MATCH{
+      made
+    }
+  }
+
+  private[squealer] def makeWithKeys(tableName: String, params: List[Column]):List[CaseDef] ={
     (CASE(REF(tableName) UNAPPLY pattern(params)) ==>(withKeys(params))) ::
     (CASE(WILDCARD) ==> FALSE) :: Nil
   }
