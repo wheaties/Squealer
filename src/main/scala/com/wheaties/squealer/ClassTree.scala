@@ -5,7 +5,7 @@ import definitions._
 import treehuggerDSL._
 import scala.annotation._
 
-//TODO: some column names cn have spaces! @#$% me.
+//TODO: some column names can have spaces! @#$% me.
 
 object ConstructorTree {
   def apply(name: String, params: List[Column]):ClassDefStart ={
@@ -16,8 +16,6 @@ object ConstructorTree {
   private def paramStart(params: List[Column]) = if(params.size < 23) caseStart _ else classStart _
   private def caseStart(name: String, typeOf: Type):ValDef = PARAM(name, typeOf)
   private def classStart(name: String, typeOf: Type):ValDef = VAL(name, typeOf)
-
-  //The above functions when followed by LIT fields are translated to assign statements. This is required. 
   private def defaultStart(params: List[Column]) = if(params.size < 23) caseDefault _ else classDefault _
   private def caseDefault(name: String, typeOf: Type, default: String):ValDef = PARAM(name, typeOf) := LIT(default)
   private def classDefault(name: String, typeOf: Type, default: String):ValDef = VAL(name, typeOf) := LIT(default)  
@@ -74,6 +72,7 @@ object AssumptionTree extends (List[Column] => List[Tree]){
     LIT(name + "." + restrict +" must be less than " + value.toString)
 }
 
+//TODO: finish me, you forgot non-case classes without primary keys!
 object HashCodeTree extends (List[Column] => Tree){
   def apply(params: List[Column])= DEF("hashCode") withFlags(Flags.OVERRIDE) := make(params)
 
@@ -96,24 +95,50 @@ object HashCodeTree extends (List[Column] => Tree){
 object EqualsTree extends ((String, List[Column]) => Tree){
   def apply(tableName: String, params: List[Column]) ={
     DEF("equals") withFlags(Flags.OVERRIDE) withParams(PARAM("that", "Any")) := REF("that") MATCH{
-      (CASE(REF(tableName) UNAPPLY pattern(params, Nil)) ==>(make(params, Nil))) ::
-      (CASE(WILDCARD) ==> FALSE) :: Nil
+      make(tableName, params)
     }
   }
 
-  @tailrec private[squealer] def make(remainder: List[Column], acc: List[Infix]):Infix = remainder match{
+  def make(tableName: String, params: List[Column]):List[CaseDef] ={
+    if(params.exists(col => col.isInstanceOf[PrimaryKeyDef] || col.isInstanceOf[NullablePrimaryKey])){
+      makeWithKeys(tableName, params)
+    }
+    else{
+      makeWithoutKeys(tableName, params)
+    }
+  }
+
+  private[squealer] def makeWithKeys(tableName: String, params: List[Column]) ={
+    (CASE(REF(tableName) UNAPPLY pattern(params)) ==>(withKeys(params))) ::
+    (CASE(WILDCARD) ==> FALSE) :: Nil
+  }
+
+  @tailrec private[squealer] def withKeys(remainder: List[Column], acc: List[Infix] = Nil):Infix = remainder match{
     case PrimaryKeyDef(name, _, _) :: xs =>
       val param = (THIS DOT name) OBJ_EQ (REF("that") DOT name)
-      make(xs, param :: acc)
-    case x :: xs => make(xs, acc)
+      withKeys(xs, param :: acc)
+    case NullablePrimaryKey(name, _) :: xs =>
+      val param = (THIS DOT name) OBJ_EQ (REF("that") DOT name)
+      withKeys(xs, param :: acc)
+    case x :: xs => withKeys(xs, acc)
     case Nil => acc.reduce((left, right) => left AND right)
   }
 
-  @tailrec private[squealer] def pattern(remainder: List[Column], acc: List[Ident]):List[Ident] = remainder match{
-    case PrimaryKeyDef(name, _, _) :: xs => pattern(xs, ID(name) :: acc)
-    case NullablePrimaryKey(name, _) :: xs => pattern(xs, ID(name) :: acc)
-    case x :: xs => pattern(xs, WILDCARD :: acc)
-    case Nil => acc.reverse
+  private[squealer] def pattern(params: List[Column]):List[Ident] = params map{
+    _ match{
+        case PrimaryKeyDef(name, _, _) => ID(name)
+        case NullablePrimaryKey(name, _) => ID(name)
+        case _ => WILDCARD
+    }
+  }
+
+  private[squealer] def makeWithoutKeys(tableName: String, params: List[Column]):List[CaseDef] ={
+      (CASE(ID(tableName) withType(tableName)) ==>(withoutKeys(params))) :: (CASE(WILDCARD) ==> FALSE) :: Nil
+  }
+
+  private[squealer] def withoutKeys(remainder: List[Column]):Infix ={
+    val checks = remainder.map(col => (THIS DOT col.name) OBJ_EQ (REF("that") DOT col.name) )
+    checks.reduce((left, right) => left AND right)
   }
 }
 

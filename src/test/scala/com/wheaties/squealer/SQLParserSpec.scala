@@ -214,5 +214,22 @@ class SQLParserSpec extends Specification{
       val output = SQLParser.distinct("distinct(foo)")
       output must contain(Success(Term("foo", None), LineNil))
     }
+
+    "handle aliases" in{
+      val output = SQLParser.distinct("distinct(foo) as yo")
+      output must contain(Success(Term("foo", Some("yo")), LineNil))
+    }
+  }
+
+  "count" should{
+    "just work" in{
+      val output = SQLParser.count("count(foo)")
+      output must contain(Success(Count("foo", None), LineNil))
+    }
+
+    "handle aliases" in{
+      val output = SQLParser.count("count(foo) as yo")
+      output must contain(Success(Count("foo", Some("yo")), LineNil))
+    }
   }
 }

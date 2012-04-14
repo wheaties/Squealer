@@ -104,19 +104,24 @@ object SQLParser extends Parsers with RegexParsers{
   def terms:Parser[List[Expr]] ={
     WILDCARD ^^{_ => List(Wildcard) } |
     distinct ^^{ d => List(d) } |
-    distinct ~ AS ~ ITEM ^^{ (dist, _, name) => List(dist.copy(alias = Some(name))) }
-    distinct ~ AS ~ ITEM ~ SEP ~ terms ^^{ (dist, _, name, _, t) => dist.copy(alias = Some(name)) :: t } |
+    distinct ~ SEP ~ terms ^^{ (dist, _, t) => dist :: t } |
     count ^^{ c => List(c) } |
-    count ~ AS ~ ITEM ~ SEP ~ terms ^^{ (cnt, _, name, _, t) => cnt.copy(alias = Some(name)) :: t } |
+    count ~ SEP ~ terms ^^{ (cnt, _, t) => cnt :: t } |
     aliased ^^{v => List(v)} |
     aliased ~ SEP ~ terms ^^{ (v, _, t) => v :: t }
   }
 
   val DISTINCT = """(?i)distinct""".r
-  def distinct = DISTINCT ~ LEFT_PAREN ~> ITEM <~ RIGHT_PAREN ^^{ item => Term(item, None) }
+  def distinct ={
+    DISTINCT ~ LEFT_PAREN ~ ITEM ~ RIGHT_PAREN ^^{ (_, _, item, _) => Term(item, None) } |
+    DISTINCT ~ LEFT_PAREN ~ ITEM ~ RIGHT_PAREN ~ AS ~ ITEM ^^{ (_, _, item, _, _, name) => Term(item, Some(name)) }
+  }
 
   val COUNT = """(?i)count""".r
-  def count = COUNT ~ LEFT_PAREN ~> ITEM <~ RIGHT_PAREN ^^{ item => Count(item, None) }
+  def count ={
+    COUNT ~ LEFT_PAREN ~ ITEM ~ RIGHT_PAREN ^^{ (_, _, item, _) => Count(item, None) } |
+    COUNT ~ LEFT_PAREN ~ ITEM ~ RIGHT_PAREN ~ AS ~ ITEM ^^{ (_, _, item, _, _, name) => Count(item, Some(name)) }
+  }
 
   def aliased ={
     ITEM ~ AS ~ ITEM ^^{ (term1, _, alias1) => Term(term1, Some(alias1)) } |
