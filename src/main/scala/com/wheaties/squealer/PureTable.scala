@@ -24,19 +24,11 @@ object ImpureTable extends (Clazz => Tree){
   }
 }
 
-//TODO: why don't regular classes have hashCode and equals!?
+//TODO: this isn't an object. it has one method, apply. It's a def. Make it so...
 object ToTree extends ((String, List[Column]) => ClassDef){
   def apply(name: String, columns: List[Column]):ClassDef ={
-    val copy = if(columns.size < 23) Nil else CopyTree(name, columns) :: Nil
-    val body = if(hasPrimaryKey(columns)){
-      HashCodeTree(columns) :: EqualsTree(name, columns) :: Nil
+    ConstructorTree(name, columns) := BLOCK{
+      AssumptionTree(columns) ::: HashCodeTree(columns) :: EqualsTree(name, columns) ::  CopyTree(name, columns) :: Nil
     }
-    else Nil
-
-    ConstructorTree(name, columns) := BLOCK{ AssumptionTree(columns) ::: body ::: copy }
-  }
-
-  protected def hasPrimaryKey(columns: List[Column]) ={
-    columns.exists(_.isInstanceOf[PrimaryKeyDef]) || columns.exists(_.isInstanceOf[NullablePrimaryKey])
   }
 }

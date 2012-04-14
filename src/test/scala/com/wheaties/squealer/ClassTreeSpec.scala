@@ -220,14 +220,14 @@ class CopyTreeSpec extends Specification{
   "Table" should{
     val column = ColumnDef("a", "Int", None)
 
-    "generate a single argument copy with one column" in{
-      val tree = CopyTree("Foo", column :: Nil)
-      treeToString(tree) must be_==("def copy(a: Int = this.a) = new Foo(a)")
+    "generate an empty tree for less than 23 columns" in{
+      CopyTree("Foo", column :: Nil) must be_==(EmptyTree)
     }
 
     "generate multiple arguments with multiple columns" in{
-      val tree = CopyTree("Foo", column :: column :: Nil)
-      treeToString(tree) must be_==("def copy(a: Int = this.a, a: Int = this.a) = new Foo(a, a)")
+      val columns = for{i <- 0 to 22} yield column
+      val tree = CopyTree("Foo", columns.toList)
+      treeToString(tree) must be_==("def copy(a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a, a: Int = this.a) = new Foo(a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a)")
     }
   }
 }

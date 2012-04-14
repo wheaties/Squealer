@@ -37,7 +37,7 @@ object ConstructorTree {
 }
 
 object AssumptionTree extends (List[Column] => List[Tree]){
-  def apply(params: List[Column]) = {
+  def apply(params: List[Column]):List[Tree] = {
     @tailrec def make(remainder: List[Column], acc: List[Tree] = Nil):List[Tree] = remainder match{
       case NullableColumnDef(name, _) :: xs if check(remainder.head) =>
         val assumeOpt = REF(name) MAP LAMBDA(PARAM("x")) ==> makeAssumption(remainder.head, "x")
@@ -73,7 +73,7 @@ object AssumptionTree extends (List[Column] => List[Tree]){
 }
 
 object HashCodeTree extends (List[Column] => Tree){
-  def apply(params: List[Column])={
+  def apply(params: List[Column]):Tree ={
     if(params.exists(col => col.isInstanceOf[PrimaryKeyDef] || col.isInstanceOf[NullablePrimaryKey])){
       DEF("hashCode") withFlags(Flags.OVERRIDE) := defineHashCode(withKeys(params))
     }
@@ -106,7 +106,7 @@ object HashCodeTree extends (List[Column] => Tree){
 }
 
 object EqualsTree extends ((String, List[Column]) => Tree){
-  def apply(tableName: String, params: List[Column]) ={
+  def apply(tableName: String, params: List[Column]):Tree ={
     if(params.exists(col => col.isInstanceOf[PrimaryKeyDef] || col.isInstanceOf[NullablePrimaryKey])){
       defineEquals(makeWithKeys(tableName, params))
     }
@@ -159,11 +159,14 @@ object EqualsTree extends ((String, List[Column]) => Tree){
 }
 
 object CopyTree extends ((String,List[Column]) => Tree){
-  def apply(name: String, params: List[Column]):Tree ={
+  def apply(name: String, params: List[Column]):Tree = if(params.length > 22){
     val args = params.map{ col =>
       PARAM(col.name, col.typeOf) := THIS DOT col.name
     }
 
     DEF("copy") withParams(args) := NEW(name, params.map(x => REF(x.name)): _*)
+  }
+  else{
+    EmptyTree
   }
 }
