@@ -102,20 +102,13 @@ class AssumptionTreeSpec extends Specification{
 
 class EqualsTreeSpec extends Specification{
 
-  "Table without Primary Keys" should{
-    val noKeys = ColumnDef("a", "Int", None) :: Nil
-
-    "throw an exception at runtime" in{
-      EqualsTree("Foo", noKeys) must be_==(EmptyTree)
+  "Table with less than 22 columns and no Primary Keys" should{
+    "return an empty tree for no columns" in{
+      EqualsTree("Foo", Nil) must be_==(EmptyTree)
     }
 
-    "create an empty list of pattern matching args" in{
-      val tree = EqualsTree.pattern(noKeys)
-      treeToString(tree) must be_==("List(Ident(_))")
-    }
-
-    "throw an exception at runtime when envoking make" in{
-      EqualsTree.withKeys(noKeys) must throwA[UnsupportedOperationException]
+    "return an empty tree for less than 23 columns" in{
+      EqualsTree("Foo", ColumnDef("b", "Int", None) :: Nil) must be_==(EmptyTree)
     }
   }
 
@@ -175,15 +168,25 @@ class EqualsTreeSpec extends Specification{
       treeToString(tree) must be_==("this.a eq that.a")
     }
   }
+
+  "Table with more than 22 columns and no primary keys" should{
+    val columns = for{i <- 0 to 22} yield ColumnDef("a", "Int", None)
+
+    //TODO: figure out a less ugly way of making this happen, i.e. (((((((((... this ain't lisp
+    "create a proper equals method" in{
+      val tree = EqualsTree("Foo", columns.toList)
+      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case (x: Foo) => ((((((((((((((((((((((this.a eq that.a) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)) && (this.a eq that.a)\n    case _ => false\n  }")
+    }
+  }
 }
 
 class HashCodeTreeSpec extends Specification{
 
-  "Table with no Primary Keys" should{
+  "Table with less than 23 columns but no Primary Keys" should{
     val noKeys = ColumnDef("a", "Int", None) :: Nil
 
-    "throw an exception" in{
-      HashCodeTree(noKeys) must throwA[UnsupportedOperationException]
+    "produce an empty tree" in{
+      HashCodeTree(noKeys) must be_==(EmptyTree)
     }
   }
 
@@ -203,6 +206,12 @@ class HashCodeTreeSpec extends Specification{
       val tree = HashCodeTree(keys)
       treeToString(tree) must be_==("override def hashCode = List(b.hashCode, a.hashCode).reduceLeft((left, right) => (left * 17) ^ right)")
     }
+  }
+
+  "Table with more than 22 columns but no Primary Key" should{
+    val columns = for{i <- 0 to 22} yield ColumnDef("a", "Int", None)
+    val tree = HashCodeTree(columns.toList)
+    treeToString(tree) must be_==("override lazy val hashCode = List(a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode).reduceLeft((left, right) => (left * 17) ^ right)")
   }
 }
 

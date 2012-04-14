@@ -72,24 +72,37 @@ object AssumptionTree extends (List[Column] => List[Tree]){
     LIT(name + "." + restrict +" must be less than " + value.toString)
 }
 
-//TODO: finish me, you forgot non-case classes without primary keys!
 object HashCodeTree extends (List[Column] => Tree){
-  def apply(params: List[Column])= DEF("hashCode") withFlags(Flags.OVERRIDE) := make(params)
+  def apply(params: List[Column])={
+    if(params.exists(col => col.isInstanceOf[PrimaryKeyDef] || col.isInstanceOf[NullablePrimaryKey])){
+      DEF("hashCode") withFlags(Flags.OVERRIDE) := defineHashCode(withKeys(params))
+    }
+    else if(params.length > 22){
+      LAZYVAL("hashCode") withFlags(Flags.OVERRIDE) := defineHashCode(withoutKeys(params))
+    }
+    else{
+      EmptyTree
+    }
+  }
 
-  @tailrec private[squealer] def make(remainder: List[Column], acc: List[SelectStart] = Nil):Tree = remainder match{
-    case PrimaryKeyDef(name, typeOf, _) :: xs =>
+  private[squealer] def defineHashCode(hashed: List[SelectStart]):Tree ={
+    LIST(hashed) REDUCELEFT LAMBDA(PARAM(TUPLE(REF("left"), REF("right")))) ==>{
+      PAREN(REF("left") INT_* LIT(17)) INFIX("^") APPLY REF("right")
+    }
+  }
+
+  @tailrec private[squealer] def withKeys(remainder: List[Column], acc: List[SelectStart] = Nil):List[SelectStart] = remainder match{
+    case PrimaryKeyDef(name, _, _) :: xs =>
       val key = REF(name) DOT "hashCode"
-      make(xs, key :: acc)
+      withKeys(xs, key :: acc)
     case NullablePrimaryKey(name, _) :: xs =>
       val key = REF(name) DOT "hashCode"
-      make(xs, key :: acc)
-    case x :: xs => make(xs, acc)
-    case Nil =>
-      if(acc.isEmpty) throw new UnsupportedOperationException
-      else LIST(acc) REDUCELEFT LAMBDA(PARAM(TUPLE(REF("left"), REF("right")))) ==>{
-        PAREN(REF("left") INT_* LIT(17)) INFIX("^") APPLY REF("right")
-      }
+      withKeys(xs, key :: acc)
+    case x :: xs => withKeys(xs, acc)
+    case Nil => acc
   }
+
+  private[squealer] def withoutKeys(params: List[Column]) = params.map(col => REF(col.name) DOT "hashCode")
 }
 
 object EqualsTree extends ((String, List[Column]) => Tree){
@@ -136,11 +149,11 @@ object EqualsTree extends ((String, List[Column]) => Tree){
   }
 
   private[squealer] def makeWithoutKeys(tableName: String, params: List[Column]):List[CaseDef] ={
-      (CASE(ID(tableName) withType(tableName)) ==>(withoutKeys(params))) :: (CASE(WILDCARD) ==> FALSE) :: Nil
+      (CASE(ID("x") withType(tableName)) ==>(withoutKeys(params))) :: (CASE(WILDCARD) ==> FALSE) :: Nil
   }
 
-  private[squealer] def withoutKeys(remainder: List[Column]):Infix ={
-    val checks = remainder.map(col => (THIS DOT col.name) OBJ_EQ (REF("that") DOT col.name) )
+  private[squealer] def withoutKeys(params: List[Column]):Infix ={
+    val checks = params.map(col => (THIS DOT col.name) OBJ_EQ (REF("that") DOT col.name) )
     checks.reduce((left, right) => left AND right)
   }
 }
