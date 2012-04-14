@@ -6,6 +6,7 @@ import treehuggerDSL._
 object PureTable extends (Table => Tree){
   def apply(table: Table) ={
     BLOCK{
+      IMPORT("java.sql._")
       ObjectTree(table.name, table.columns)
       ToTree(table.name, table.columns)
     } withoutPackage
@@ -18,6 +19,7 @@ case class Clazz(classPackage: String, name: String, columns: List[Column])
 object ImpureTable extends (Clazz => Tree){
   def apply(clazz: Clazz) ={
     BLOCK{
+      IMPORT("java.sql._")
       ObjectTree(clazz.name, clazz.columns)
       ToTree(clazz.name, clazz.columns)
     } inPackage(clazz.classPackage)
