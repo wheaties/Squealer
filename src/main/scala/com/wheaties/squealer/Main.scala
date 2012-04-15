@@ -47,6 +47,6 @@ trait Squealer{
     None
   }
 
+  //Really? Am I really making this more unit testable!?
   def write(result: ParsedResult)(implicit recorder: Recorder[ParsedResult]) = recorder.record(result)
 }
-

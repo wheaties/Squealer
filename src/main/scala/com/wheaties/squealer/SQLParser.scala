@@ -28,7 +28,7 @@ object SQLParser extends Parsers with RegexParsers{
   val FROM = """(?i)from""".r
   val WHERE = """(?i)where""".r
   val ITEM = """[^\s,()]+""".r
-  val SEP = """\s*,\s*""".r
+  val SEP = ",".r
   val BETWEEN = """(?i)between""".r
   val LIKE = """(?i)like""".r
   val STRING = """'.*'""".r
@@ -37,7 +37,7 @@ object SQLParser extends Parsers with RegexParsers{
   val RIGHT_PAREN = """\)""".r
   val EQUATION = """[=<>]+""".r
 
-
+  //TODO: comments!
   def statement = select ~ from ~ where ^^{
     (selectClause, fromClause, whereClause) => SQL(selectClause, fromClause, whereClause)
   }
@@ -77,7 +77,7 @@ object SQLParser extends Parsers with RegexParsers{
     ITEM ^^{ (item) => List(item) }
   }
 
-  //TODO: nested expressions, joins
+  //TODO: nested expressions
   def from ={
     FROM ~ aliased ^^{ (_, table) => From(List(table)) } |
     FROM ~ aliased ~ rep(join) ^^{ (_, table, listOfJoin) => From(table :: listOfJoin) }

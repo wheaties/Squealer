@@ -21,14 +21,13 @@ object PureTable extends ((Table, String) => Tree){
 //TODO: move me to where we do the SQL AST parsing and matching against database
 case class Clazz(classPackage: String, name: String, columns: List[Column])
 
+//TODO: have to include the statement creators here to map the SQL to code
 object ImpureTable extends (Clazz => Tree){
-  def apply(clazz: Clazz) ={
-    BLOCK{
-      IMPORT("java.sql._") ::
-      ObjectTree(clazz.name, clazz.columns) ::
-      ToTree(clazz.name, clazz.columns) :: Nil
-    } inPackage(clazz.classPackage)
-  }
+  def apply(clazz: Clazz) = BLOCK{
+    IMPORT("java.sql._") ::
+    ObjectTree(clazz.name, clazz.columns) ::
+    ToTree(clazz.name, clazz.columns) :: Nil
+  } inPackage(clazz.classPackage)
 }
 
 //TODO: this isn't an object. it has one method, apply. It's a def. Make it so...

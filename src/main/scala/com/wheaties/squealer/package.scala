@@ -5,20 +5,33 @@ import java.io.{FileWriter, File}
 
 package squealer{
 
-  //Think if I should really make a Result[Tree], Result[String], Result[Table]...
   case class ParsedResult(classPackage: String, className: String, ast: Tree)
 
   trait Recorder[T]{
-    def record(result: ParsedResult)
+    def record(result: ParsedResult):Unit
   }
 
   object Implicits{
 
     implicit object FileRecorder extends Recorder[ParsedResult]{
-      def record(result: ParsedResult) ={
+      val basePath = "src" + File.pathSeparatorChar + "main" + File.pathSeparatorChar + "scala"
+
+      def record(result: ParsedResult){
         val ParsedResult(classPackage, className, ast) = result
-        val path = classPackage.replace('.', File.pathSeparatorChar)
-        val file = new File(path + File.pathSeparatorChar + className)
+
+        val path = basePath + File.pathSeparatorChar + classPackage.replace('.', File.pathSeparatorChar)
+        try{
+          val filePath = new File(path)
+          if(!filePath.exists()) filePath.mkdir()
+          val file = new File(path + File.pathSeparatorChar + className + ".scala")
+          write(file, ast)
+        }
+        catch{
+          case ex => println(ex.getMessage)
+        }
+      }
+
+      def write(file: File, ast: Tree)={
         val writer = new FileWriter(file)
         try{
           writer.write(treeToString(ast))
@@ -28,6 +41,5 @@ package squealer{
         }
       }
     }
-
   }
 }
