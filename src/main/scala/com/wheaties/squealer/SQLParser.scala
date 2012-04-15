@@ -3,7 +3,7 @@ package com.wheaties.squealer
 import com.codecommit.gll._
 
 //TODO: move these to another file
-trait Expr
+sealed trait Expr
 case object Wildcard extends Expr
 case class Term(term: String, alias: Option[String]) extends Expr
 case class Count(term: String, alias: Option[String]) extends Expr
@@ -103,6 +103,7 @@ object SQLParser extends Parsers with RegexParsers{
     FROM ~ aliased ~ rep(join) ^^{ (_, table, listOfJoin) => From(table :: listOfJoin) }
   }
 
+  //TODO: nested expressions
   val JOIN = """(?i)join""".r
   val INNER = """(?i)inner""".r
   val LEFT = """(?i)left""".r
