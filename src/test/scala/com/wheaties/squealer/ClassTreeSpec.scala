@@ -18,19 +18,19 @@ class ConstructorTreeSpec extends Specification{
   "Table with less than 22 columns" should{
 
     "make a non-empty constructor list" in{
-      val tree = ConstructorTree("Yo", ColumnDef("hey", "String", None) :: Nil)
+      val tree = ConstructorTree("Yo", ColumnDef("hey", "String", None, None) :: Nil)
       treeToString(tree.tree) must be_==("case class Yo(hey: String)")
     }
 
     "handle default arguments" in{
-      val tree = ConstructorTree("Yo", ColumnDef("hey", "String", Some("Hello")) :: Nil)
+      val tree = ConstructorTree("Yo", ColumnDef("hey", "String", Some("Hello"), None) :: Nil)
       treeToString(tree.tree) must be_==("case class Yo(hey: String = \"Hello\")")
     }
   }
 
   "Table with more than 22 columns" should{
     val chars = "abcdefghijklmnopqrstuvwxyz".toCharArray
-    val columns = for{indx <- 0 to 22} yield ColumnDef(chars(indx).toString, "Int", None)
+    val columns = for{indx <- 0 to 22} yield ColumnDef(chars(indx).toString, "Int", None, None)
 
     "make a non-empty constructor list" in{
       val tree = ConstructorTree("Yo", columns.toList)
@@ -42,7 +42,7 @@ class ConstructorTreeSpec extends Specification{
 class AssumptionTreeSpec extends Specification{
 
   "Table with a sized column" should{
-    val column = new ColumnDef("Foo", "Int", None) with WithSize{
+    val column = new ColumnDef("Foo", "Int", None, None) with WithSize{
       override val size = 42
       override val precision = 0
     }
@@ -58,7 +58,7 @@ class AssumptionTreeSpec extends Specification{
   }
 
   "Table with a length column" should{
-    val column = new ColumnDef("Foo", "Int", None) with WithLength{
+    val column = new ColumnDef("Foo", "Int", None, None) with WithLength{
       override val length = 42
     }
 
@@ -73,7 +73,7 @@ class AssumptionTreeSpec extends Specification{
   }
 
   "Table with a numeric scaled column" should{
-    val column = new ColumnDef("Foo", "Int", None) with WithScale{
+    val column = new ColumnDef("Foo", "Int", None, None) with WithScale{
       override val precision = 42
       override val scale = 42
     }
@@ -89,7 +89,7 @@ class AssumptionTreeSpec extends Specification{
   }
 
   "Table with several columns" should{
-     val column = new ColumnDef("Foo", "Int", None) with WithSize{
+     val column = new ColumnDef("Foo", "Int", None, None) with WithSize{
       override val size = 42
     }
 
@@ -108,12 +108,12 @@ class EqualsTreeSpec extends Specification{
     }
 
     "return an empty tree for less than 23 columns" in{
-      EqualsTree("Foo", ColumnDef("b", "Int", None) :: Nil) must be_==(EmptyTree)
+      EqualsTree("Foo", ColumnDef("b", "Int", None, None) :: Nil) must be_==(EmptyTree)
     }
   }
 
   "Table with One Primary Key" should{
-    val keys = PrimaryKeyDef("a", "Int", None) :: Nil
+    val keys = PrimaryKeyDef("a", "Int", None, None) :: Nil
 
     "create a proper equals method" in{
       val tree = EqualsTree("Foo", keys)
@@ -132,7 +132,7 @@ class EqualsTreeSpec extends Specification{
   }
 
   "Table with a composite Primary Key" should{
-    val keys = PrimaryKeyDef("a", "Int", None) :: PrimaryKeyDef("b", "Int", None) :: Nil
+    val keys = PrimaryKeyDef("a", "Int", None, None) :: PrimaryKeyDef("b", "Int", None, None) :: Nil
 
     "create a proper equals method" in{
       val tree = EqualsTree("Foo", keys)
@@ -151,7 +151,7 @@ class EqualsTreeSpec extends Specification{
   }
 
   "Table with mixed Column types" should{
-    val keys = PrimaryKeyDef("a", "Int", None) :: ColumnDef("b", "Int", None) :: Nil
+    val keys = PrimaryKeyDef("a", "Int", None, None) :: ColumnDef("b", "Int", None, None) :: Nil
 
     "create a proper equals method" in{
       val tree = EqualsTree("Foo", keys)
@@ -170,7 +170,7 @@ class EqualsTreeSpec extends Specification{
   }
 
   "Table with more than 22 columns and no primary keys" should{
-    val columns = for{i <- 0 to 22} yield ColumnDef("a", "Int", None)
+    val columns = for{i <- 0 to 22} yield ColumnDef("a", "Int", None, None)
 
     //TODO: figure out a less ugly way of making this happen, i.e. (((((((((... this ain't lisp
     "create a proper equals method" in{
@@ -183,7 +183,7 @@ class EqualsTreeSpec extends Specification{
 class HashCodeTreeSpec extends Specification{
 
   "Table with less than 23 columns but no Primary Keys" should{
-    val noKeys = ColumnDef("a", "Int", None) :: Nil
+    val noKeys = ColumnDef("a", "Int", None, None) :: Nil
 
     "produce an empty tree" in{
       HashCodeTree(noKeys) must be_==(EmptyTree)
@@ -191,7 +191,7 @@ class HashCodeTreeSpec extends Specification{
   }
 
   "Table with one Primary Key" should{
-    val keys = PrimaryKeyDef("a", "Int", None) :: Nil
+    val keys = PrimaryKeyDef("a", "Int", None, None) :: Nil
 
     "create a proper hashCode method" in{
       val tree = HashCodeTree(keys)
@@ -200,7 +200,7 @@ class HashCodeTreeSpec extends Specification{
   }
 
   "Table with a composite Primary Key" should{
-    val keys = PrimaryKeyDef("a", "Int", None) :: PrimaryKeyDef("b", "Int", None) :: Nil
+    val keys = PrimaryKeyDef("a", "Int", None, None) :: PrimaryKeyDef("b", "Int", None, None) :: Nil
 
     "create a proper hashCode method" in{
       val tree = HashCodeTree(keys)
@@ -209,7 +209,7 @@ class HashCodeTreeSpec extends Specification{
   }
 
   "Table with more than 22 columns but no Primary Key" should{
-    val columns = for{i <- 0 to 22} yield ColumnDef("a", "Int", None)
+    val columns = for{i <- 0 to 22} yield ColumnDef("a", "Int", None, None)
     val tree = HashCodeTree(columns.toList)
     treeToString(tree) must be_==("override lazy val hashCode = List(a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode).reduceLeft((left, right) => (left * 17) ^ right)")
   }
@@ -218,7 +218,7 @@ class HashCodeTreeSpec extends Specification{
 class CopyTreeSpec extends Specification{
 
   "Table" should{
-    val column = ColumnDef("a", "Int", None)
+    val column = ColumnDef("a", "Int", None, None)
 
     "generate an empty tree for less than 23 columns" in{
       CopyTree("Foo", column :: Nil) must be_==(EmptyTree)
