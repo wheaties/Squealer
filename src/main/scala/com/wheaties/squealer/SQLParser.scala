@@ -24,7 +24,7 @@ case class SQL(selectClause: Select, fromClause: Expr, whereClause: Expr) extend
 case class Union(left: Expr, right: Expr) extends Expr
 case class UnionAll(left: Expr, right: Expr) extends Expr
 
-object SQLParser extends Parsers with RegexParsers{
+object SQLParser extends Parsers with RegexParsers with (String => Stream[Result[Expr]]){
 
   def apply(input: String) = parser(input)
 
