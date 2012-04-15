@@ -43,8 +43,8 @@ object ParseDataSource extends ((String,String,String) => Database){
   }
 
   /**
-   * TODO: Columns can have constraints. They can be limited to a set, a range or computed.
-   * Think about how to capture it. Computed columns are generally values within the same row.
+   * TODO: Columns can have constraints. They can be limited to a set, a range , a condition or computed.
+   * Think about how to capture it. Computed columns constraints are generally computed with values from the same row.
    */
 
   //TODO: by request, pull out the remarks for each column and add in to pure table

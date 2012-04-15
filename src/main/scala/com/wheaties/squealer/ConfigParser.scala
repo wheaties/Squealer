@@ -6,6 +6,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 case class StatementDefinition(pack: String, name: String, statement: String)
 case class DatabaseStatements(url: String, user: String, password: String, statements: List[StatementDefinition])
 
+//TODO: add in ability to specify the tables and/or sql statements. Be flexible!
 object ConfigParser extends (String => DatabaseStatements){
   val PACKAGE = "package"
   val CLASS_NAME = "class_name"
@@ -14,6 +15,7 @@ object ConfigParser extends (String => DatabaseStatements){
   val PASSWORD = "password"
   val USER = "user"
   val GROUPS = "groups"
+  val TABLES = "tables"
 
   def apply(fileName: String) = parseConfig(ConfigFactory.load(fileName))
 
