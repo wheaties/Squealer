@@ -3,10 +3,14 @@ package com.wheaties.squealer
 import collection.JavaConversions.JListWrapper
 import com.typesafe.config.{Config, ConfigFactory}
 
-case class StatementDefinition(pack: String, name: String, statement: String)
-case class DatabaseStatements(url: String, user: String, password: String, statements: List[StatementDefinition])
+sealed trait Statement{
+  val pack: String
+  val name: String
+}
+case class TableStatement(pack: String, name: String) extends Statement
+case class ClassStatement(pack: String, name: String, statement: String) extends Statement
+case class DatabaseStatements(url: String, user: String, password: String, statements: List[Statement])
 
-//TODO: add in ability to specify the tables and/or sql statements. Be flexible!
 object ConfigParser extends (String => DatabaseStatements){
   val PACKAGE = "package"
   val CLASS_NAME = "class_name"
@@ -17,23 +21,31 @@ object ConfigParser extends (String => DatabaseStatements){
   val GROUPS = "groups"
   val TABLES = "tables"
 
-  def apply(fileName: String) = parseConfig(ConfigFactory.load(fileName))
+  def apply(fileName: String) ={
+    val config = ConfigFactory.load(fileName)
+    val groups = if(config.hasPath(GROUPS)) parseGroups(config) else Nil
+    val tables = if(config.hasPath(TABLES)) parseTables(config) else Nil
 
-  protected def parseConfig(config: Config) ={
-    val statements = for{
+    DatabaseStatements(config.getString(URL), config.getString(USER), config.getString(PASSWORD), groups ::: tables)
+  }
+
+  protected def parseGroups(config: Config) = for{
       entry <- JListWrapper(config.getConfigList(GROUPS)).toList
       statement <- unpackGroup(entry)
     } yield statement
 
-    val strings = config.getString _
-    DatabaseStatements(strings(URL), strings(USER), strings(PASSWORD), statements)
-  }
-
   protected def unpackGroup(config: Config)= try{
-    val strings = config.getString _
-    Some(StatementDefinition(strings(PACKAGE), strings(CLASS_NAME), strings(SQL_STATEMENT)))
+    Some(ClassStatement(config.getString(PACKAGE), config.getString(CLASS_NAME), config.getString(SQL_STATEMENT)))
   }
   catch{
     case ex => println(ex.getMessage); None
+  }
+
+  protected def parseTables(config: Config) = try{
+    val pack = config.getString(PACKAGE)
+    for(table <- JListWrapper(config.getStringList(TABLES)).toList) yield TableStatement(pack, table)
+  }
+  catch{
+    case ex => println(ex.getMessage); Nil
   }
 }

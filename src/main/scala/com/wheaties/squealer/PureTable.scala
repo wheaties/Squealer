@@ -3,14 +3,18 @@ package com.wheaties.squealer
 import treehugger.forest._
 import treehuggerDSL._
 
-//TODO: D-R-Y violations here
-object PureTable extends (Table => Tree){
-  def apply(table: Table) ={
-    BLOCK{
-      IMPORT("java.sql._") ::
-      ObjectTree(table.name, table.columns) ::
-      ToTree(table.name, table.columns) :: Nil
-    } withoutPackage
+object PureTable extends ((Table, String) => Tree){
+  def apply(table: Table, pack: String):Tree = if(pack.isEmpty){
+    BLOCK{ block(table) } withoutPackage
+  }
+  else{
+    BLOCK{ block(table) } inPackage(pack)
+  }
+
+  protected[squealer] def block(table: Table)={
+    IMPORT("java.sql._") ::
+    ObjectTree(table.name, table.columns) ::
+    ToTree(table.name, table.columns) :: Nil
   }
 }
 

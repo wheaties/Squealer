@@ -5,7 +5,12 @@ import com.wheaties.squealer.Implicits._
 //TODO: By Monday, 16th. Get comments working and make sure pure table works.
 object Main extends Squealer{
   def main(args: Array[String]){
-    action()
+    if(args.isEmpty){
+      action("statements.conf")
+    }
+    else{
+      args.foreach(action)
+    }
   }
 }
 
@@ -19,20 +24,28 @@ object Main extends Squealer{
 
 trait Squealer{
 
-  def action() ={
-    val DatabaseStatements(url, user, password, statements) = ConfigParser("statements.conf")
+  def action(configName: String) ={
+    val DatabaseStatements(url, user, password, statements) = ConfigParser(configName)
     val source = ParseDataSource(url, user, password)
-    val results = statements match{
-      case Nil => empty(source)
-      case _ => nonEmpty(source, statements)
+    val results = statements flatMap{
+      _ match{
+        case x:TableStatement => generateTable(x, source)
+        case x:ClassStatement => generateClass(x, source)
+      }
     }
+
     results.map(write)
   }
 
-  def empty(database: Database) = for{table <- database.tables} yield ParsedResult("", table.name, PureTable(table))
+  def generateTable(statement: TableStatement, dataSource: Database) ={
+    val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield PureTable(table, statement.pack)
+    tree.map(ParsedResult(statement.pack, statement.name, _))
+  }
 
   //TODO: finish me once we've got the SQL AST figured out
-  def nonEmpty(database: Database, statements: List[StatementDefinition]) = Nil
+  def generateClass(statement: ClassStatement, dataSource: Database) ={
+    None
+  }
 
   def write(result: ParsedResult)(implicit recorder: Recorder[ParsedResult]) = recorder.record(result)
 }
