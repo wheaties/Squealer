@@ -30,9 +30,13 @@ object ImpureTable extends (Clazz => Tree){
   } inPackage(clazz.classPackage)
 }
 
-//TODO: this isn't an object. it has one method, apply. It's a def. Make it so...
-object ToTree extends ((String, List[Column]) => ClassDef){
-  def apply(name: String, columns: List[Column]):ClassDef ={
+object ToTree extends ((String, List[Column]) => Tree){
+  def apply(name: String, columns: List[Column]):Tree ={
+    val comments = ScalaDocTree(name, columns)
+    comments(makeClass(name, columns))
+  }
+
+  private[squealer] def makeClass(name: String, columns: List[Column]):ClassDef ={
     ConstructorTree(name, columns) := BLOCK{
       AssumptionTree(columns) ::: HashCodeTree(columns) :: EqualsTree(name, columns) ::  CopyTree(name, columns) :: Nil
     }

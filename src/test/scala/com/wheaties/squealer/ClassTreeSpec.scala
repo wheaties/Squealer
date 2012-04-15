@@ -5,6 +5,24 @@ import definitions._
 import treehuggerDSL._
 import org.specs2.mutable._
 
+class ScalaDocTreeSpec extends Specification{
+  val lit = LIT(0)
+
+  "extractComment" should{
+    "handle commented columns" in{
+      val output = ScalaDocTree.extractComment(ColumnDef("foo", "Int", None, Some("bar")))
+      output.exists(_ == "@foo bar") must beTrue
+    }
+  }
+
+  "ScalaDocTree" should{
+    "place comments before a tree" in{
+      val output = ScalaDocTree("Foo", ColumnDef("a", "Int", None, Some("yo")) :: Nil)(lit)
+      treeToString(output) must contain("// @a yo\n0")
+    }
+  }
+}
+
 class ConstructorTreeSpec extends Specification{
 
   "Table without columns" should{
