@@ -17,24 +17,33 @@ case class Where(clauses: List[Expr]) extends Expr
 case object EmptyWhere extends Expr
 case class Conditional(left: String, right: String) extends Expr
 case class InBetween(arg: String, items: List[String]) extends Expr
+case class NullConditional(arg: String) extends Expr
+//case class Between(left: String, right: String) extends Expr
 case object Like extends Expr
 case class SQL(selectClause: Select, fromClause: Expr, whereClause: Expr) extends Expr
+case class Union(left: Expr, right: Expr) extends Expr
+case class UnionAll(left: Expr, right: Expr) extends Expr
 
 object SQLParser extends Parsers with RegexParsers{
 
-  //TODO: move these closer to where they're used. Code Complete and all that...
-  val AS = """(?i)as""".r
-  val ITEM = """[^\s,()]+""".r
-  val SEP = ",".r
-  val LEFT_PAREN = """\(""".r
-  val RIGHT_PAREN = """\)""".r
+  def apply(input: String) = parser(input)
 
-  //TODO: comments, group by, having, order by, union
+  def parser = statement | union
+
+  val UNION = """(?i)union""".r
+  val ALL = """(?i)all""".r
+  def union:Parser[Expr] ={
+    statement ~ UNION ~ statement ^^{ (left, _, right) => Union(left, right) } |
+    statement ~ UNION ~ union ^^{ (left, _, right) => Union(left, right) } |
+    statement ~ UNION ~ ALL ~ statement ^^{ (left, _, _, right) => UnionAll(left, right) } |
+    statement ~ UNION ~ ALL ~ union ^^{ (left, _, _, right) => UnionAll(left, right) }
+  }
+
+  //TODO: comments, group by, having, order by
   def statement = select ~ from ~ where ^^{
     (selectClause, fromClause, whereClause) => SQL(selectClause, fromClause, whereClause)
   }
 
-  //TODO: nested expressions
   val WHERE = """(?i)where""".r
   def where ={
     WHERE ~ chainExpression ^^{ (_, expr) => Where(expr) } |
@@ -49,8 +58,16 @@ object SQLParser extends Parsers with RegexParsers{
     expression ~ OR ~ chainExpression ^^{ (e, _, listOfe) => e :: listOfe }
   }
 
-  //TODO: IS NULL, IS NOT NULL
-  def expression = equation | like | between | in
+  def expression = equation | like | between | in | is
+
+  val ITEM = """[^\s,()]+""".r
+  val IS = """(?i)is""".r
+  val NOT = """(?i)not""".r
+  val NULL = """(?i)null""".r
+  def is ={
+    ITEM ~ IS ~ NULL ^^{ (item, _, _) => NullConditional(item) } |
+    ITEM ~ IS ~ NOT ~ NULL ^^{ (item, _, _, _) => NullConditional(item) }
+  }
 
   //TODO: nested expressions
   val EQUATION = """[=<>]+""".r
@@ -61,6 +78,9 @@ object SQLParser extends Parsers with RegexParsers{
   def like = ITEM ~ LIKE ~ STRING ^^{ (_, _, _) => Like }
 
   val BETWEEN = """(?i)between""".r
+  val LEFT_PAREN = """\(""".r
+  val RIGHT_PAREN = """\)""".r
+  val SEP = ",".r
   def between ={
     ITEM ~ BETWEEN ~ LEFT_PAREN ~ ITEM ~ SEP ~ ITEM ~ RIGHT_PAREN ^^{
       (item, _, _, item1, _, item2, _) => InBetween(item, item1 :: item2 :: Nil)
@@ -113,6 +133,7 @@ object SQLParser extends Parsers with RegexParsers{
   }
 
   val DISTINCT = """(?i)distinct""".r
+  val AS = """(?i)as""".r
   def distinct ={
     DISTINCT ~ LEFT_PAREN ~ ITEM ~ RIGHT_PAREN ^^{ (_, _, item, _) => Term(item, None) } |
     DISTINCT ~ LEFT_PAREN ~ ITEM ~ RIGHT_PAREN ~ AS ~ ITEM ^^{ (_, _, item, _, _, name) => Term(item, Some(name)) }
