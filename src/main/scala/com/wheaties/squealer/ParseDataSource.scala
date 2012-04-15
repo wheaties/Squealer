@@ -26,7 +26,8 @@ object ParseDataSource extends ((String,String,String) => Database){
     val tableBuilder = List.newBuilder[Table]
     while(tables.next()){
       val tableName = tables.getString("TABLE_NAME")
-      tableBuilder += Table( tableName, parseColumns(meta, tableName))
+      val comment = Option(tables.getString("REMARKS"))
+      tableBuilder += Table(tableName, comment, parseColumns(meta, tableName))
     }
 
     tableBuilder.result()
@@ -58,12 +59,13 @@ object ParseDataSource extends ((String,String,String) => Database){
       val nullable = DatabaseMetaData.columnNoNulls != columns.getInt("NULLABLE")
       val name = columns.getString("COLUMN_NAME")
       val default = Option(columns.getString("COLUMN_DEF"))
+      val comment = Option(columns.getString("REMARKS"))
 
       def create(typeOf: String) = typeOf match{
-        case _ if nullable && keys.contains(name) => NullablePrimaryKey(name, typeOf)
-        case _ if nullable => NullableColumnDef(name, typeOf)
-        case _ if keys.contains(name) => PrimaryKeyDef(name, typeOf, default)
-        case _ => ColumnDef(name, typeOf, default)
+        case _ if nullable && keys.contains(name) => NullablePrimaryKey(name, typeOf, comment)
+        case _ if nullable => NullableColumnDef(name, typeOf, comment)
+        case _ if keys.contains(name) => PrimaryKeyDef(name, typeOf, default, comment)
+        case _ => ColumnDef(name, typeOf, default, comment)
       }
 
       //following Oracle mapping guide: http://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/getstart/mapping.html
@@ -72,21 +74,21 @@ object ParseDataSource extends ((String,String,String) => Database){
         case DOUBLE | FLOAT => create("Double")
         case INTEGER => create("Int")
         case NUMERIC | DECIMAL if nullable && keys.contains(name) =>
-          new NullablePrimaryKey(name, "BigDecimal") with WithScale{
+          new NullablePrimaryKey(name, "BigDecimal", comment) with WithScale{
             override val scale = columns.getInt("COLUMN_SIZE")
             override val precision = columns.getInt("DECIMAL_DIGITS")
           }
         case NUMERIC | DECIMAL if nullable =>
-          new NullableColumnDef(name, "BigDecimal") with WithScale{
+          new NullableColumnDef(name, "BigDecimal", comment) with WithScale{
             override val scale = columns.getInt("COLUMN_SIZE")
             override val precision = columns.getInt("DECIMAL_DIGITS")
           }
         case NUMERIC | DECIMAL if keys.contains(name) =>
-          new PrimaryKeyDef(name, "BigDecimal", default) with WithScale{
+          new PrimaryKeyDef(name, "BigDecimal", default, comment) with WithScale{
             override val scale = columns.getInt("COLUMN_SIZE")
             override val precision = columns.getInt("DECIMAL_DIGITS")
           }
-        case NUMERIC | DECIMAL => new ColumnDef(name, "BigDecimal", default) with WithScale{
+        case NUMERIC | DECIMAL => new ColumnDef(name, "BigDecimal", default, comment) with WithScale{
           override val scale = columns.getInt("COLUMN_SIZE")
           override val precision = columns.getInt("DECIMAL_DIGITS")
         }
@@ -94,34 +96,34 @@ object ParseDataSource extends ((String,String,String) => Database){
         case BIT => create("Boolean")
         case SMALLINT | TINYINT => create("Short")
         case CHAR | LONGVARCHAR | VARCHAR | LONGNVARCHAR | NCHAR if nullable && keys.contains(name) =>
-          new NullablePrimaryKey(name, "String") with WithLength{
+          new NullablePrimaryKey(name, "String", comment) with WithLength{
             override val length = columns.getInt("COLUMN_SIZE")
           }
         case CHAR | LONGVARCHAR | VARCHAR | LONGNVARCHAR | NCHAR if nullable =>
-          new NullableColumnDef(name, "String") with WithLength{
+          new NullableColumnDef(name, "String", comment) with WithLength{
             override val length = columns.getInt("COLUMN_SIZE")
           }
         case CHAR | LONGVARCHAR | VARCHAR | LONGNVARCHAR | NCHAR if keys.contains(name) =>
-          new PrimaryKeyDef(name, "String", default) with WithLength{
+          new PrimaryKeyDef(name, "String", default, comment) with WithLength{
             override val length = columns.getInt("COLUMN_SIZE")
           }
         case CHAR | LONGVARCHAR | VARCHAR | LONGNVARCHAR | NCHAR =>
-          new ColumnDef(name, "String", default) with WithLength{
+          new ColumnDef(name, "String", default, comment) with WithLength{
             override val length = columns.getInt("COLUMN_SIZE")
           }
         case BINARY | VARBINARY | LONGVARBINARY if nullable && keys.contains(name) =>
-          new NullablePrimaryKey(name, "Array[Byte]") with WithSize{
+          new NullablePrimaryKey(name, "Array[Byte]", comment) with WithSize{
             override val size = columns.getInt("COLUMN_SIZE")
           }
         case BINARY | VARBINARY | LONGVARBINARY if nullable =>
-          new NullableColumnDef(name, "Array[Byte]") with WithSize{
+          new NullableColumnDef(name, "Array[Byte]", comment) with WithSize{
             override val size = columns.getInt("COLUMN_SIZE")
           }
         case BINARY | VARBINARY | LONGVARBINARY if keys.contains(name) =>
-          new PrimaryKeyDef(name, "Array[Byte]", default) with WithSize{
+          new PrimaryKeyDef(name, "Array[Byte]", default, comment) with WithSize{
             override val size = columns.getInt("COLUMN_SIZE")
           }
-        case BINARY | VARBINARY | LONGVARBINARY => new ColumnDef(name, "Array[Byte]", default) with WithSize{
+        case BINARY | VARBINARY | LONGVARBINARY => new ColumnDef(name, "Array[Byte]", default, comment) with WithSize{
           override val size = columns.getInt("COLUMN_SIZE")
         }
         case DATE => create("Date")

@@ -16,12 +16,12 @@ object ObjectTree extends ((String,List[Column]) => Tree){
 
   protected[squealer] def extract(params: List[Column]) ={
     @tailrec def make(remainder: List[Column], acc: List[Tree]):List[Tree] = remainder match{
-      case ColumnDef(name, typeOf, _) :: xs => make(xs, function(name, typeOf) :: acc)
-      case PrimaryKeyDef(name, typeOf, _) :: xs => make(xs, function(name, typeOf) :: acc)
-      case NullableColumnDef(name, typeOf) :: xs =>
+      case ColumnDef(name, typeOf, _, _) :: xs => make(xs, function(name, typeOf) :: acc)
+      case PrimaryKeyDef(name, typeOf, _, _) :: xs => make(xs, function(name, typeOf) :: acc)
+      case NullableColumnDef(name, typeOf, _) :: xs =>
         val value = REF("Option") APPLY(function(name, typeOf))
         make(xs, value :: acc)
-      case NullablePrimaryKey(name, typeOf) :: xs =>
+      case NullablePrimaryKey(name, typeOf, _) :: xs =>
         val value = REF("Option") APPLY(function(name, typeOf))
         make(xs, value :: acc)
       case Nil => acc.reverse

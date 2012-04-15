@@ -19,7 +19,7 @@ object PureTable extends ((Table, String) => Tree){
 }
 
 //TODO: move me to where we do the SQL AST parsing and matching against database
-case class Clazz(classPackage: String, name: String, columns: List[Column])
+case class Clazz(classPackage: String, name: String, sql: String, columns: List[Column])
 
 //TODO: have to include the statement creators here to map the SQL to code
 object ImpureTable extends (Clazz => Tree){
