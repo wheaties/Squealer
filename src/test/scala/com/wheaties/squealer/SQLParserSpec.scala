@@ -73,18 +73,6 @@ class SQLParserSpec extends Specification{
     }
   }
 
-  "values" should{
-    "just work" in{
-      val output = SQLParser.values("(foo, bar)")
-      output must contain(Success(List("foo", "bar"), LineNil))
-    }
-
-    "just work with spaces" in{
-      val output = SQLParser.values("( foo, bar )")
-      output must contain(Success(List("foo", "bar"), LineNil))
-    }
-  }
-
   "equation" should{
     "compute less than" in{
       val output = SQLParser.equation("c.foo < p.bar")

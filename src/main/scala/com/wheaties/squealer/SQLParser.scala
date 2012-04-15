@@ -23,26 +23,19 @@ case class SQL(selectClause: Select, fromClause: Expr, whereClause: Expr) extend
 object SQLParser extends Parsers with RegexParsers{
 
   //TODO: move these closer to where they're used. Code Complete and all that...
-  val SELECT = """(?i)select""".r
   val AS = """(?i)as""".r
-  val FROM = """(?i)from""".r
-  val WHERE = """(?i)where""".r
   val ITEM = """[^\s,()]+""".r
   val SEP = ",".r
-  val BETWEEN = """(?i)between""".r
-  val LIKE = """(?i)like""".r
-  val STRING = """'.*'""".r
-  val IN = """(?i)in""".r
   val LEFT_PAREN = """\(""".r
   val RIGHT_PAREN = """\)""".r
-  val EQUATION = """[=<>]+""".r
 
-  //TODO: comments!
+  //TODO: comments, group by, having, order by, union
   def statement = select ~ from ~ where ^^{
     (selectClause, fromClause, whereClause) => SQL(selectClause, fromClause, whereClause)
   }
 
   //TODO: nested expressions
+  val WHERE = """(?i)where""".r
   def where ={
     WHERE ~ chainExpression ^^{ (_, expr) => Where(expr) } |
     "" ^^{ _ => EmptyWhere }
@@ -60,17 +53,23 @@ object SQLParser extends Parsers with RegexParsers{
   def expression = equation | like | between | in
 
   //TODO: nested expressions
+  val EQUATION = """[=<>]+""".r
   def equation = ITEM ~ EQUATION ~ ITEM ^^{ (left, _, right) => Conditional(left, right) }
 
-  //TODO: nested expressions
+  val LIKE = """(?i)like""".r
+  val STRING = """'.*'""".r
   def like = ITEM ~ LIKE ~ STRING ^^{ (_, _, _) => Like }
 
-  def between =  ITEM ~ BETWEEN ~ values ^^{ (item, _, vals) => InBetween(item, vals) }
+  val BETWEEN = """(?i)between""".r
+  def between ={
+    ITEM ~ BETWEEN ~ LEFT_PAREN ~ ITEM ~ SEP ~ ITEM ~ RIGHT_PAREN ^^{
+      (item, _, _, item1, _, item2, _) => InBetween(item, item1 :: item2 :: Nil)
+    }
+  }
 
   //TODO: nested expressions
-  def in = ITEM ~ IN ~ values ^^{ (item, _, vals) => InBetween(item, vals) }
-
-  def values = LEFT_PAREN ~> chained <~ RIGHT_PAREN ^^{ (chain) => chain }
+  val IN = """(?i)in""".r
+  def in = ITEM ~ IN ~ LEFT_PAREN ~ chained ~ RIGHT_PAREN ^^{ (item, _, _, vals, _) => InBetween(item, vals) }
 
   def chained:Parser[List[String]] ={
     ITEM ~ SEP ~ chained ^^{ (left, _, more) => left :: more } |
@@ -78,6 +77,7 @@ object SQLParser extends Parsers with RegexParsers{
   }
 
   //TODO: nested expressions
+  val FROM = """(?i)from""".r
   def from ={
     FROM ~ aliased ^^{ (_, table) => From(List(table)) } |
     FROM ~ aliased ~ rep(join) ^^{ (_, table, listOfJoin) => From(table :: listOfJoin) }
@@ -97,6 +97,7 @@ object SQLParser extends Parsers with RegexParsers{
     FULL ~ JOIN ~ aliased ~ ON ~ equation ^^{ (_, _, item, _, cond) => FullJoin(item, cond) }
   }
 
+  val SELECT = """(?i)select""".r
   def select = SELECT ~ terms ^^{ (_, t) => Select(t) }
 
   //TODO: remove wildcard ambiguity
