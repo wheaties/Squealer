@@ -220,4 +220,67 @@ class SQLParserSpec extends Specification{
       output must contain(Success(Count("foo", Some("yo")), LineNil))
     }
   }
+
+  "from" should{
+    "handle plain from" in{
+      SQLParser.from("from foo") must contain(Success(From(List(Term("foo", None))), LineNil))
+    }
+
+    "handle joins" in{
+      val output = SQLParser.from("from foo\njoin bar on foo.a = bar.a")
+      output must contain(Success(From(List(
+        Term("foo", None),
+        Join(Term("bar", None), Conditional("foo.a", "bar.a")))), LineNil))
+    }
+
+    "handle left joins" in{
+      val output = SQLParser.from("from foo\nleft join bar on foo.a = bar.a")
+      output must contain(Success(From(List(
+        Term("foo", None),
+        LeftJoin(Term("bar", None), Conditional("foo.a", "bar.a")))), LineNil))
+    }
+
+    "handle right joins" in{
+      val output = SQLParser.from("from foo\nright join bar on foo.a = bar.a")
+      output must contain(Success(From(List(
+        Term("foo", None),
+        RightJoin(Term("bar", None), Conditional("foo.a", "bar.a")))), LineNil))
+    }
+
+    "handle inner joins" in{
+      val output = SQLParser.from("from foo\ninner join bar on foo.a = bar.a")
+      output must contain(Success(From(List(
+        Term("foo", None),
+        Join(Term("bar", None), Conditional("foo.a", "bar.a")))), LineNil))
+    }
+
+    "handle full joins" in{
+      val output = SQLParser.from("from foo\nfull join bar on foo.a = bar.a")
+      output must contain(Success(From(List(
+        Term("foo", None),
+        FullJoin(Term("bar", None), Conditional("foo.a", "bar.a")))), LineNil))
+    }
+  }
+
+  "union" should{
+    "handle a single union" in{
+      val output = SQLParser.union("select id from foo union select id from bar")
+      output must contain(Success(
+        Union(
+          SQL(Select(List(Term("id", None))), From(List(Term("foo", None))), EmptyWhere),
+          SQL(Select(List(Term("id", None))), From(List(Term("bar", None))), EmptyWhere)),
+        LineNil))
+    }
+
+    "handle multiple unions" in{
+      val output = SQLParser.union("select id from foo union select id from bar union select id from baz")
+      output must contain(Success(
+        Union(
+          SQL(Select(List(Term("id", None))), From(List(Term("foo", None))), EmptyWhere),
+          Union(
+            SQL(Select(List(Term("id", None))), From(List(Term("bar", None))), EmptyWhere),
+            SQL(Select(List(Term("id", None))), From(List(Term("baz", None))), EmptyWhere))),
+        LineNil))
+    }
+  }
 }
