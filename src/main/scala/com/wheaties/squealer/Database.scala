@@ -10,14 +10,14 @@ sealed trait Column{
   def length: Int = 0
 }
 trait WithSize{
-  val size: Int
+  def size: Int
 }
 trait WithScale{
-  val scale: Int
-  val precision: Int
+  def scale: Int
+  def precision: Int
 }
 trait WithLength{
-  val length: Int
+  def length: Int
 }
 
 case class ColumnDef(name: String, typeOf: String, default: Option[String], comment: Option[String]) extends Column

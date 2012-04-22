@@ -13,8 +13,8 @@ object SQLParser extends Parsers with RegexParsers with (String => Stream[Result
   protected[squealer] def union:Parser[Expr] ={
     statement ~ UNION ~ statement ^^{ (left, _, right) => Union(left, right) } |
     statement ~ UNION ~ union ^^{ (left, _, right) => Union(left, right) } |
-    statement ~ UNION ~ ALL ~ statement ^^{ (left, _, _, right) => UnionAll(left, right) } |
-    statement ~ UNION ~ ALL ~ union ^^{ (left, _, _, right) => UnionAll(left, right) }
+    statement ~ UNION ~ ALL ~ statement ^^{ (left, _, _, right) => Union(left, right) } |
+    statement ~ UNION ~ ALL ~ union ^^{ (left, _, _, right) => Union(left, right) }
   }
 
   //TODO: comments, group by, having, order by

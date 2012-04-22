@@ -2,7 +2,6 @@ package com.wheaties.squealer
 
 import com.wheaties.squealer.Implicits._
 
-//TODO: By Monday, 16th. Get comments working and make sure pure table works.
 object Main extends Squealer{
   def main(args: Array[String]){
     if(args.isEmpty){
@@ -37,8 +36,8 @@ trait Squealer{
     results.map(write)
   }
 
-  def generateTable(statement: TableStatement, dataSource: Database) ={
-    val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield PureTable(table, statement.pack)
+  def generateTable(statement: TableStatement, dataSource: Database, formatter: (Table => Table) = identity) ={
+    val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield PureTable(table, statement.pack, formatter)
     tree.map(ParsedResult(statement.pack, statement.name, _))
   }
 

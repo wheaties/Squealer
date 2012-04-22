@@ -3,12 +3,12 @@ package com.wheaties.squealer
 import treehugger.forest._
 import treehuggerDSL._
 
-object PureTable extends ((Table, String) => Tree){
-  def apply(table: Table, pack: String):Tree = if(pack.isEmpty){
-    BLOCK{ block(table) } withoutPackage
+object PureTable extends ((Table, String, Table => Table) => Tree){
+  def apply(table: Table, pack: String, formatter : (Table => Table) = identity):Tree = if(pack.isEmpty){
+    BLOCK{ block(formatter(table)) } withoutPackage
   }
   else{
-    BLOCK{ block(table) } inPackage(pack)
+    BLOCK{ block(formatter(table)) } inPackage(pack)
   }
 
   protected[squealer] def block(table: Table)={
