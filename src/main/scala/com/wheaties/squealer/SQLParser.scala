@@ -60,8 +60,11 @@ object SQLParser extends Parsers with RegexParsers with (String => Stream[Result
   val RIGHT_PAREN = """\)""".r
   val SEP = ",".r
   protected[squealer] def between ={
-    ITEM ~ BETWEEN ~ LEFT_PAREN ~ ITEM ~ SEP ~ ITEM ~ RIGHT_PAREN ^^{
-      (item, _, _, item1, _, item2, _) => InBetween(item, item1 :: item2 :: Nil)
+    LEFT_PAREN ~ ITEM ~ BETWEEN ~ ITEM ~ AND ~ ITEM ~ RIGHT_PAREN ^^{
+      (_, item, _, item1, _, item2, _) => InBetween(item, item1 :: item2 :: Nil)
+    } |
+    ITEM ~ BETWEEN ~ ITEM ~ AND ~ ITEM ^^{
+      (item, _, item1, _, item2) => InBetween(item, item1 :: item2 :: Nil)
     }
   }
 

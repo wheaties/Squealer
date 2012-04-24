@@ -114,7 +114,7 @@ class SQLParserSpec extends Specification{
 
   "between" should{
     "just work" in{
-      val output = SQLParser.between("foo between(8, 9)")
+      val output = SQLParser.between("foo between 8 and 9")
       output must contain(Success(InBetween("foo", List("8", "9")), LineNil))
     }
   }
