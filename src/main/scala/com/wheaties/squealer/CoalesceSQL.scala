@@ -16,15 +16,12 @@ object CoalesceSQL{
 
   }
 
-  def populateColumns(select: Select, tables: List[Table]) ={
-    //TODO: this is a map...
-    select.terms flatMap{
-      _ match{
-        case Wildcard => tables.flatMap(_.columns)
-        case count @ Count(_, _) => List(ColumnDef(termName(count), "Int", None, None))
-        case term @ Term(_, _) => find(term, tables)
-        case _ => List.empty[Column]//how'd this happen!?
-      }
+  def populateColumns(select: Select, tables: List[Table]) = select.terms flatMap{
+    _ match{
+      case Wildcard => tables.flatMap(_.columns)
+      case count @ Count(_, _) => List(ColumnDef(termName(count), "Int", None, None))
+      case term @ Term(_, _) => find(term, tables)
+      case _ => List.empty[Column] //how'd this happen!?
     }
   }
 
