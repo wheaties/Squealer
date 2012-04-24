@@ -2,13 +2,6 @@ package com.wheaties.squealer
 
 import annotation.tailrec
 
-/**
-* Map select clauses down as follows:
-*
-* 1. COUNT is int
-* 2. wildcards take full columns of table
-*/
-
 //TODO: new name, it ain't validation, per se
 object CoalesceSQL{
   def apply(source: Database, sql: Expr) = sql match{
@@ -25,28 +18,32 @@ object CoalesceSQL{
 
   def populateColumns(select: Select, tables: List[Table]) ={
     //TODO: this is a map...
-    @tailrec def parseClauses(remainder: List[Expr], acc: List[Column] = Nil):List[Column] ={
-      remainder match{
-        case Wildcard :: xs => parseClauses(xs, tables.flatMap(_.columns) ::: acc)
-        case Count(term, alias) :: xs => parseClauses( xs, ColumnDef(termName(term, alias), "Int", None, None) :: acc)
-        case Term(term, alias) :: xs => parseClauses(xs, acc) //TODO: finish me
-        case Nil => acc
+    select.terms flatMap{
+      _ match{
+        case Wildcard => tables.flatMap(_.columns)
+        case count @ Count(_, _) => List(ColumnDef(termName(count), "Int", None, None))
+        case term @ Term(_, _) => find(term, tables)
+        case _ => List.empty[Column]//how'd this happen!?
       }
     }
   }
 
-  protected def find(term: Term, tables: List[Table]):List[Column] ={
-    val listOption = term.term.split('.') match{
-      case Array(front, "*") => tables find(_.name eq front) map(_.columns)
-      case Array(front, back) =>
-        tables.find(_.name eq front) flatMap(_.columns.find(_.name eq termName(term))) map(List(_))
-      case Array(name) => None //TODO: finish me
-    }
-
-    listOption.getOrElse(List.empty[Column])
+  //TODO: figure out renaming
+  //TODO: figure out if can't be found. Perhaps should be Either[Exception,List]
+  protected def find(term: Term, tables: List[Table]):List[Column] = term.term.split('.') match{
+    case Array(front, "*") => tables find(_.name eq front) map(_.columns) getOrElse(List.empty[Column])
+    case Array(front, back) =>
+      val column = tables.find(_.name eq front) flatMap(_.columns.find(_.name eq termName(term)))
+      //column map(_.copy(name = termName(term))) toList
+      column toList
+    case Array(name) =>
+      val column = tables.flatMap(_.columns.find(_.name eq name)).headOption
+      //column map(_.copy(name = termName(term))) toList
+      column toList
   }
 
   //TODO: this is repeated, collapse into one entity in one place
+  protected def termName(count: Count):String = termName(count.term, count.alias)
   protected def termName(term: Term):String = termName(term.term, term.alias)
   protected def termName(term: String, alias: Option[String]) = alias.getOrElse{
     term.split(".") match{
