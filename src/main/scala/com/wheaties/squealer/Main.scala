@@ -36,7 +36,7 @@ trait Squealer{
     results.map(write)
   }
 
-  def generateTable(statement: TableStatement, dataSource: Database, formatter: (Table => Table) = identity) ={
+  def generateTable(statement: TableStatement, dataSource: Database, formatter: (Table => Table) = CamelCase) ={
     val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield PureTable(table, statement.pack, formatter)
     tree.map(ParsedResult(statement.pack, statement.name, _))
   }
