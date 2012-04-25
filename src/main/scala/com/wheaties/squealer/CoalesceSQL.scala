@@ -25,18 +25,15 @@ object CoalesceSQL{
     }
   }
 
-  //TODO: figure out renaming
   //TODO: figure out if can't be found. Perhaps should be Either[Exception,List]
   protected def find(term: Term, tables: List[Table]):List[Column] = term.term.split('.') match{
     case Array(front, "*") => tables find(_.name eq front) map(_.columns) getOrElse(List.empty[Column])
     case Array(front, back) =>
       val column = tables.find(_.name eq front) flatMap(_.columns.find(_.name eq termName(term)))
-      //column map(_.copy(name = termName(term))) toList
-      column toList
+      column map(col => ReformatColumn(col, _ => termName(term))) toList
     case Array(name) =>
       val column = tables.flatMap(_.columns.find(_.name eq name)).headOption
-      //column map(_.copy(name = termName(term))) toList
-      column toList
+      column map(col => ReformatColumn(col, _ => termName(term))) toList
   }
 
   //TODO: this is repeated, collapse into one entity in one place

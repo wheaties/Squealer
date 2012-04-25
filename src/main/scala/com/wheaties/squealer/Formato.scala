@@ -1,20 +1,7 @@
 package com.wheaties.squealer
 
-//TODO: add in a regex based formato impl
-
-/**
- * Formato: takes a table and gives you back a cleanly, squeaky table
- */
-trait Formato extends (Table => Table){
-
-  def apply(table: Table)={
-    val Table(name, comment, columns) = table
-
-    Table(format(name).capitalize, comment, columns.map(formatColumns))
-  }
-
-  //TODO: this is how I should be reducing D-R-Y in the code
-  def formatColumns(column: Column)= column match{
+object ReformatColumn extends ((Column,String => String) => Column){
+  def apply(column: Column, format: String => String):Column= column match{
     case col @ ColumnDef(name, typeOf, default, comment) => new ColumnDef(format(name), typeOf, default, comment){
       override def size: Int = col.size
       override def precision: Int = col.precision
@@ -40,6 +27,18 @@ trait Formato extends (Table => Table){
       override def length: Int = col.length
     }
   }
+}
+
+/**
+ * Formato: takes a table and gives you back a cleanly, squeaky table
+ */
+trait Formato extends (Table => Table){
+
+  def apply(table: Table)={
+    val Table(name, comment, columns) = table
+
+    Table(format(name).capitalize, comment, columns.map(ReformatColumn(_, format)))
+  }
 
   protected def format(name: String):String
 }
@@ -49,9 +48,16 @@ object CamelCase extends Formato{
    *  Change "HelloWorld" to "helloWorld"
    *  Change "Hello_World" to "helloWorld"
    */
-  def format(in: String): String = in.split("[_/s]").toList match{
+  protected def format(in: String): String = in.split("[_/s]").toList match{
     case word :: Nil if word.nonEmpty => word.charAt(0).toLower + word.drop(1)
     case firstWord :: rest => firstWord.toLowerCase + rest.map(_.capitalize).mkString
     case _ => ""
+  }
+}
+
+class RegexFormato(regex: String, replaceWith: String) extends Formato{
+  protected def format(in: String): String ={
+    val word = in.replaceAll(regex, replaceWith)
+    word.charAt(0).toLower + word.drop(1)
   }
 }
