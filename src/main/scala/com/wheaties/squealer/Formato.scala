@@ -21,19 +21,19 @@ trait Formato extends (Table => Table){
       override def scale: Int = col.scale
       override def length: Int = col.length
     }
-    case col @ NullableColumnDef(name, typeOf, comment) => new NullableColumnDef(name, typeOf, comment){
+    case col @ NullableColumnDef(name, typeOf, comment) => new NullableColumnDef(format(name), typeOf, comment){
       override def size: Int = col.size
       override def precision: Int = col.precision
       override def scale: Int = col.scale
       override def length: Int = col.length
     }
-    case col @ PrimaryKeyDef(name, typeOf, default, comment) => new PrimaryKeyDef(name, typeOf, default, comment){
+    case col @ PrimaryKeyDef(name, typeOf, default, comment) => new PrimaryKeyDef(format(name), typeOf, default, comment){
       override def size: Int = col.size
       override def precision: Int = col.precision
       override def scale: Int = col.scale
       override def length: Int = col.length
     }
-    case col @ NullablePrimaryKey(name, typeOf, comment) => new NullablePrimaryKey(name, typeOf, comment){
+    case col @ NullablePrimaryKey(name, typeOf, comment) => new NullablePrimaryKey(format(name), typeOf, comment){
       override def size: Int = col.size
       override def precision: Int = col.precision
       override def scale: Int = col.scale
