@@ -40,7 +40,7 @@ trait Formato extends (Table => Table){
     Table(format(name).capitalize, comment, columns.map(ReformatColumn(_, format)))
   }
 
-  protected def format(name: String):String
+  protected[squealer] def format(name: String):String
 }
 
 object CamelCase extends Formato{
@@ -48,7 +48,7 @@ object CamelCase extends Formato{
    *  Change "HelloWorld" to "helloWorld"
    *  Change "Hello_World" to "helloWorld"
    */
-  protected def format(in: String): String = in.split("[_/s]").toList match{
+  protected[squealer] def format(in: String): String = in.split("[_/s]").toList match{
     case word :: Nil if word.nonEmpty => word.charAt(0).toLower + word.drop(1)
     case firstWord :: rest => firstWord.toLowerCase + rest.map(_.capitalize).mkString
     case _ => ""
@@ -56,7 +56,7 @@ object CamelCase extends Formato{
 }
 
 class RegexFormato(regex: String, replaceWith: String) extends Formato{
-  protected def format(in: String): String ={
+  protected[squealer] def format(in: String): String ={
     val word = in.replaceAll(regex, replaceWith)
     word.charAt(0).toLower + word.drop(1)
   }
