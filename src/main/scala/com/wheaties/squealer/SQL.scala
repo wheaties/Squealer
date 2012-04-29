@@ -7,7 +7,10 @@ case class Count(term: String, alias: Option[String]) extends Expr
 case class Select(terms: List[Expr]) extends Expr
 case class From(clauses: List[Expr]) extends Expr
 
-sealed trait JoinExpr extends Expr
+sealed trait JoinExpr extends Expr{
+  def term: Expr
+  def cond: Expr
+}
 case class Join(term: Expr, cond: Expr) extends JoinExpr
 case class LeftJoin(term: Expr, cond: Expr) extends JoinExpr
 case class RightJoin(term: Expr, cond: Expr) extends JoinExpr

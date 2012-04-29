@@ -2,7 +2,6 @@ package com.wheaties.squealer
 
 import annotation.tailrec
 
-//TODO: new name, it ain't validation, per se
 object CoalesceSQL{
   def apply(source: Database, sql: Expr) = sql match{
     case x:SQL =>
@@ -12,28 +11,55 @@ object CoalesceSQL{
 
   protected[squealer] def mapSQL(source: Database, sql: SQL) ={
     val SQL(selectClause, fromClause, whereClause) = sql
-    val tables = CoalesceFromClause(fromClause, source)
-
+    val tables = CoalesceFromClause(fromClause, source.tables)
+    //val columns = populateColumns(selectClause, tables)
   }
+}
 
-  def populateColumns(select: Select, tables: List[Table]) = select.terms flatMap{
-    _ match{
-      case Wildcard => tables.flatMap(_.columns)
-      case count @ Count(_, _) => List(ColumnDef(termName(count), "Int", None, None))
-      case term @ Term(_, _) => find(term, tables)
-      case _ => List.empty[Column] //how'd this happen!?
+object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
+
+  def apply(select: Select, tableMap: Map[Term,Table]):List[Column] ={
+    val columnMap = findColumn(tableMap)
+
+    //TODO: capture missing!
+    val columns = select.terms flatMap{
+      _ match{
+        case Wildcard => tableMap.values.flatMap(_.columns).toList
+        case phrase:Count if columnMap(phrase.term).isDefined => List(ColumnDef(termName(phrase), "Int", None, None))
+        case phrase:Term => columnMap(phrase.term).toList
+        case _ => List.empty[Column] //how'd this happen!?
+      }
     }
+
+    columns
   }
 
-  //TODO: figure out if can't be found. Perhaps should be Either[Exception,List]
-  protected def find(term: Term, tables: List[Table]):List[Column] = term.term.split('.') match{
-    case Array(front, "*") => tables find(_.name eq front) map(_.columns) getOrElse(List.empty[Column])
-    case Array(front, back) =>
-      val column = tables.find(_.name eq front) flatMap(_.columns.find(_.name eq termName(term)))
-      column map(col => ReformatColumn(col, _ => termName(term))) toList
-    case Array(name) =>
-      val column = tables.flatMap(_.columns.find(_.name eq name)).headOption
-      column map(col => ReformatColumn(col, _ => termName(term))) toList
+  protected[squealer] def findColumn(tableMap: Map[Term,Table])={
+    val tableNameMap = for{
+      (term,table) <- tableMap
+      tableName <- termName(term) :: term.term :: Nil
+    } yield (tableName, table)
+    val columnNameMap = for{
+      (_, table) <- tableMap
+      column <- table.columns
+    } yield (column.name, column)
+
+    def column(phrase: String):Option[Column]={
+      termTable(phrase) match{
+        case ("", columnName) => columnNameMap.get(columnName)
+        case (tableName, columnName) => for{
+          table <- tableNameMap.get(tableName)
+          column <- table.columns.find(_.name eq columnName)
+        } yield column
+      }
+    }
+
+    column _
+  }
+
+  protected[squealer] def termTable(name: String):(String,String) = name.split(".") match{
+    case Array(front, back) => (front,back)
+    case Array(unique) => ("", unique)
   }
 
   //TODO: this is repeated, collapse into one entity in one place
@@ -47,83 +73,38 @@ object CoalesceSQL{
   }
 }
 
-object CoalesceFromClause extends ((From, Database) => List[Either[Exception,Table]]){
+//TODO: capture errors!
+object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
 
-  def apply(fromClause: From, source: Database) ={
-    val tableAliases = mapTableAliases(fromClause, source)
+  def apply(fromClause: From, tables: List[Table]) ={
+    val terms = extractTerms(fromClause.clauses)
+    val exists = terms.flatMap(t => t :: termName(t) :: Nil).toSet.contains _
 
-    @tailrec def transform(remainder:List[Expr], acc:List[Selection] = Nil):List[Selection] = remainder match{
-      case Term(name, alias) :: xs =>
-        val table = find(termName(name, alias), tableAliases)
-        transform(remainder, table :: acc)
-      case Join(_, Conditional(left, right)) :: xs =>
-        val leftTable = find(left, tableAliases)
-        val rightTable = findTable(right, acc)
-        val tables = substitute(rightTable, acc)
-        transform(xs, leftTable :: tables)
-      case LeftJoin(_, Conditional(left, right)) :: xs =>
-        val leftTable = find(left, tableAliases)
-        val rightTable = findTable(right, acc, nullColumns(_))
-        val tables = substitute(rightTable, acc)
-        transform(xs, leftTable :: tables)
-      case RightJoin(_, Conditional(left, right)) :: xs =>
-        val leftTable = find(left, tableAliases, nullColumns(_))
-        val rightTable = findTable(right, acc)
-        val tables = substitute(rightTable, acc)
-        transform(xs, leftTable :: tables)
-      case FullJoin(_, Conditional(left, right)) :: xs =>
-        val leftTable = find(left, tableAliases, nullColumns(_))
-        val rightTable = findTable(right, acc, nullColumns(_))
-        val tables = substitute(rightTable, acc)
-        transform(xs, leftTable :: tables)
-      case _ :: xs => transform(xs, acc)
-      case Nil => acc
+    @tailrec def transform(remainder:List[Expr], mapped:Map[Term,Table]):Map[Term,Table] = remainder match{
+      case Term(name, alias) :: xs if exists(name) => transform(remainder, mapped)
+      case Join(term, Conditional(left, right)) :: xs if exists(left) && exists(right) => transform(xs, mapped)
+      case LeftJoin(_, Conditional(left, right)) :: xs if exists(left) && exists(right) =>
+        val subbed = substitute(right, mapped, nullColumns)
+        transform(xs, subbed)
+      case RightJoin(_, Conditional(left, right)) :: xs if exists(left) && exists(right) =>
+        val subbed = substitute(left, mapped, nullColumns)
+        transform(xs, subbed)
+      case FullJoin(_, Conditional(left, right)) :: xs if exists(left) && exists(right) =>
+        val subbed = substitute(left, mapped, nullColumns)
+        val resubbed = substitute(right, subbed, nullColumns)
+        transform(xs, resubbed)
+      case _ :: xs => transform(xs, mapped) //TODO: right here, need a fake "error Table" or "error term"
+      case Nil => mapped
     }
 
-    transform(fromClause.clauses)
+    val tableAliases = mapTableAliases(terms, tables)
+    transform(fromClause.clauses, tableAliases)
   }
 
-  /**
-   * TODO:
-   * 2. check that both columns are present in the join
-   * 3. check that they're of compatible types
-   * 4. throw an error if they're not that's informative and traceable
-   */
-  type Selection = Either[Exception,Table]
-
-  class UnfoundTableError(name: String) extends Exception
-
-  private[squealer] def findTable(term: String, tables: List[Selection], op: Table => Table = identity):Selection ={
-    val name = termName(term, None)
-
-    @tailrec def findTable(items: List[Selection]):Selection = items match{
-      case Right(table) :: xs if table.name eq name => Right(op(table))
-      case x :: xs => findTable(xs)
-      case Nil => Left(new UnfoundTableError(term))
-    }
-
-    findTable(tables)
-  }
-
-  private[squealer] def find(name: String, tables: List[Table], op: Table => Table = identity):Selection ={
-    @tailrec def findTable(items: List[Table]):Selection = items match{
-      case table :: xs if table.name eq name => Right(op(table))
-      case x :: xs => findTable(xs)
-      case Nil => Left(new UnfoundTableError(name))
-    }
-
-    findTable(tables)
-  }
-
-  private[squealer] def substitute(selection: Selection, tables: List[Selection]) = selection match{
-    case Right(table) =>
-      @tailrec def subTables(input: List[Selection], acc: List[Selection] = Nil):List[Selection] = input match{
-        case Right(Table(name, _, _)) :: xs if name == table.name => acc ::: Right(table) :: xs
-        case x :: xs => subTables(xs, x :: acc)
-        case Nil => acc
-      }
-      subTables(tables)
-    case _ => selection :: tables
+  protected[squealer] def substitute(name: String, mapped: Map[Term,Table], op: Table => Table):Map[Term,Table] ={
+    def matches(value: String)(term: Term) = (term.term eq value) || (term.alias.exists(_ eq value))
+    val substituted = for{(term,table) <- mapped if matches(name)(term)} yield (term, op(table))
+    mapped ++ substituted
   }
 
   protected[squealer] def nullColumns(table: Table)={
@@ -138,7 +119,7 @@ object CoalesceFromClause extends ((From, Database) => List[Either[Exception,Tab
     table.copy(columns = columns)
   }
 
-  protected[squealer]def mapTableAliases(fromClause: From, source: Database) = {
+  protected[squealer] def extractTerms(expressions: List[Expr]) = {
     @tailrec def terms(remainder: List[Expr], acc: List[Term] = Nil):List[Term] = remainder match{
       case Term(name, alias) :: xs => terms(xs, Term(name, alias) :: acc)
       case Join(term @ Term(_,_), _) :: xs => terms(xs, term :: acc)
@@ -149,10 +130,16 @@ object CoalesceFromClause extends ((From, Database) => List[Either[Exception,Tab
       case Nil => acc
     }
 
-    for{
-      term <- terms(fromClause.clauses)
-      table <- source.tables.find(_.name == term.term)
-    } yield table.copy(name = termName(term))
+    terms(expressions)
+  }
+
+  protected[squealer] def mapTableAliases(terms: List[Term], tables: List[Table]) ={
+    val paired = for{
+      term <- terms
+      table <- tables.find(_.name == term.term)
+    } yield (term, table)
+
+    paired.toMap
   }
 
   protected def termName(term: Term):String = termName(term.term, term.alias)
@@ -163,3 +150,6 @@ object CoalesceFromClause extends ((From, Database) => List[Either[Exception,Tab
     }
   }
 }
+
+class UnfoundTableError(name: String) extends Exception
+class UnfoundColumnError(name: String) extends Exception
