@@ -12,7 +12,7 @@ object CoalesceSQL{
   protected[squealer] def mapSQL(source: Database, sql: SQL) ={
     val SQL(selectClause, fromClause, whereClause) = sql
     val tables = CoalesceFromClause(fromClause, source.tables)
-    //val columns = populateColumns(selectClause, tables)
+    val columns = CoalesceSelectClause(selectClause, tables)
   }
 }
 
@@ -26,7 +26,7 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
       _ match{
         case Wildcard => tableMap.values.flatMap(_.columns).toList
         case phrase:Count if columnMap(phrase.term).isDefined => List(ColumnDef(termName(phrase), "Int", None, None))
-        case phrase:Term => columnMap(phrase.term).toList
+        case phrase:Term => columnMap(phrase.term)
         case _ => List.empty[Column] //how'd this happen!?
       }
     }
