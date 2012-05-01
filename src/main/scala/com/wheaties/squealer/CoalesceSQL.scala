@@ -66,7 +66,7 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
   protected def termName(count: Count):String = termName(count.term, count.alias)
   protected def termName(term: Term):String = termName(term.term, term.alias)
   protected def termName(term: String, alias: Option[String]) = alias.getOrElse{
-    term.split(".") match{
+    term.split("\\.") match{
       case Array(front, back) => back
       case Array(single) => single
     }
@@ -80,8 +80,10 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
     val terms = extractTerms(fromClause.clauses)
     val exists = terms.flatMap(t => t :: termName(t) :: Nil).toSet.contains _
 
+    //TODO: some big assumptions here:=> LEFT JOIN foo ON bar.id = foo.id <=: is perfectly valid and legal...
+    //TODO: need to handle that case just as well as the case where conditional is foo.id = bar.id
     @tailrec def transform(remainder:List[Expr], mapped:Map[Term,Table]):Map[Term,Table] = remainder match{
-      case Term(name, alias) :: xs if exists(name) => transform(remainder, mapped)
+      case Term(name, alias) :: xs if exists(name) => transform(xs, mapped)
       case Join(term, Conditional(left, right)) :: xs if exists(left) && exists(right) => transform(xs, mapped)
       case LeftJoin(_, Conditional(left, right)) :: xs if exists(left) && exists(right) =>
         val subbed = substitute(right, mapped, nullColumns)
@@ -122,10 +124,10 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
   protected[squealer] def extractTerms(expressions: List[Expr]) = {
     @tailrec def terms(remainder: List[Expr], acc: List[Term] = Nil):List[Term] = remainder match{
       case Term(name, alias) :: xs => terms(xs, Term(name, alias) :: acc)
-      case Join(term @ Term(_,_), _) :: xs => terms(xs, term :: acc)
-      case LeftJoin(term @ Term(_,_), _) :: xs => terms(xs, term :: acc)
-      case RightJoin(term @ Term(_,_), _) :: xs => terms(xs, term :: acc)
-      case FullJoin(term @ Term(_,_), _) :: xs => terms(xs, term :: acc)
+      case Join(term:Term, _) :: xs => terms(xs, term :: acc)
+      case LeftJoin(term:Term, _) :: xs => terms(xs, term :: acc)
+      case RightJoin(term:Term, _) :: xs => terms(xs, term :: acc)
+      case FullJoin(term:Term, _) :: xs => terms(xs, term :: acc)
       case x :: xs => terms(xs, acc)
       case Nil => acc
     }
@@ -144,7 +146,7 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
 
   protected def termName(term: Term):String = termName(term.term, term.alias)
   protected def termName(term: String, alias: Option[String]) = alias.getOrElse{
-    term.split(".") match{
+    term.split("\\.") match{
       case Array(front, back) => back
       case Array(single) => single
     }
