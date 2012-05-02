@@ -67,6 +67,24 @@ class CoalesceFromClauseSpec extends Specification{
     }
   }
 
+  "mapTableAliases" should{
+    val terms = Term("foo", None) :: Term("bar", Some("b")) :: Nil
+    val tables = Table("foo", None, Nil) :: Table("b", None, Nil) :: Nil
+    val mapped = CoalesceFromClause.mapTableAliases(terms, tables)
+
+    "map by table names" in{
+      mapped.get(Term("foo", None)) must beSome
+    }
+
+    "not map by table aliases" in{
+      mapped.get(Term("bar", Some("b"))) must beNone
+    }
+
+    "map only found tables" in{
+      mapped must have size(1)
+    }
+  }
+
   "left joins" should{
     val tables = Table("foo", None, ColumnDef("id", "Int", None, None) :: Nil) ::
       Table("bar", None, ColumnDef("id", "Int", None, None) :: Nil) :: Nil
