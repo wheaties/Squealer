@@ -78,7 +78,7 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
 
   def apply(fromClause: From, tables: List[Table]) ={
     val terms = extractTerms(fromClause.clauses)
-    val exists = terms.flatMap(t => t :: termName(t) :: Nil).toSet.contains _
+    val exists = conditionalExists(terms)
 
     //TODO: some big assumptions here:=> LEFT JOIN foo ON bar.id = foo.id <=: is perfectly valid and legal...
     //TODO: need to handle that case just as well as the case where conditional is foo.id = bar.id
@@ -101,6 +101,19 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
 
     val tableAliases = mapTableAliases(terms, tables)
     transform(fromClause.clauses, tableAliases)
+  }
+
+  protected[squealer] def conditionalExists(terms: List[Term]) ={
+    val termSet = terms.flatMap(t => t :: termName(t) :: Nil).toSet
+    def found(name: String) ={
+      val tableName = name.split(".") match{
+        case Array(front, back) => front
+        case Array(unique) => unique
+      }
+      termSet.contains(tableName)
+    }
+
+    found _
   }
 
   protected[squealer] def substitute(name: String, mapped: Map[Term,Table], op: Table => Table):Map[Term,Table] ={
