@@ -113,7 +113,7 @@ class CoalesceFromClauseSpec extends Specification{
 
     "force the right hand side's columns to null" in{
       val nulled = for{
-        (_, table) <- mapped if table.name eq "foo"
+        (_, table) <- mapped if table.name eq "bar"
         column <- table.columns
       } yield column
 

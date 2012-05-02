@@ -111,8 +111,9 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
   }
 
   protected[squealer] def substitute(name: String, mapped: Map[Term,Table], op: Table => Table):Map[Term,Table] ={
-    def matches(value: String)(term: Term) = (term.term eq value) || (term.alias.exists(_ eq value))
-    val substituted = for{(term,table) <- mapped if matches(name)(term)} yield (term, op(table))
+    val tableName = name.split("\\.").head
+    def matches(term: Term) = (term.term eq tableName) || (term.alias.exists(_ eq tableName))
+    val substituted = for{(term,table) <- mapped if matches(term)} yield (term, op(table))
     mapped ++ substituted
   }
 
