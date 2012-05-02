@@ -26,6 +26,10 @@ class CoalesceFromClauseSpec extends Specification{
       makeCol("b") must contain(column)
     }
 
+    "substitute a table from a conditional on a join" in{
+      makeCol("foo.id") must contain(column)
+    }
+
     "substitute nothing if no matching name exists" in{
       makeCol("oh no") must not contain(column)
     }
