@@ -85,6 +85,22 @@ class CoalesceFromClauseSpec extends Specification{
     }
   }
 
+  "conditionalExists" should{
+    val exists = CoalesceFromClause.conditionalExists(Term("foo", Some("bar")) :: Nil)
+
+    "return true for term names" in{
+      exists("foo") must beTrue
+    }
+
+    "return true for aliased term names" in{
+      exists("bar") must beTrue
+    }
+
+    "return false for names that don't exist" in{
+      exists("foobar") must beFalse
+    }
+  }
+
   "left joins" should{
     val tables = Table("foo", None, ColumnDef("id", "Int", None, None) :: Nil) ::
       Table("bar", None, ColumnDef("id", "Int", None, None) :: Nil) :: Nil

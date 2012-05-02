@@ -66,10 +66,7 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
   protected def termName(count: Count):String = termName(count.term, count.alias)
   protected def termName(term: Term):String = termName(term.term, term.alias)
   protected def termName(term: String, alias: Option[String]) = alias.getOrElse{
-    term.split("\\.") match{
-      case Array(front, back) => back
-      case Array(single) => single
-    }
+    term.split("\\.").last
   }
 }
 
@@ -104,12 +101,9 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
   }
 
   protected[squealer] def conditionalExists(terms: List[Term]) ={
-    val termSet = terms.flatMap(t => t :: termName(t) :: Nil).toSet
+    val termSet = terms.flatMap(t => t.term :: termName(t) :: Nil).toSet
     def found(name: String) ={
-      val tableName = name.split(".") match{
-        case Array(front, back) => front
-        case Array(unique) => unique
-      }
+      val tableName = name.split("\\.").head
       termSet.contains(tableName)
     }
 
@@ -159,10 +153,7 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
 
   protected def termName(term: Term):String = termName(term.term, term.alias)
   protected def termName(term: String, alias: Option[String]) = alias.getOrElse{
-    term.split("\\.") match{
-      case Array(front, back) => back
-      case Array(single) => single
-    }
+    term.split("\\.").last
   }
 }
 
