@@ -49,7 +49,7 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
         case ("", columnName) => columnNameMap.get(columnName)
         case (tableName, columnName) => for{
           table <- tableNameMap.get(tableName)
-          column <- table.columns.find(_.name eq columnName)
+          column <- table.columns.find(_.name == columnName)
         } yield column
       }
     }
@@ -112,7 +112,7 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
 
   protected[squealer] def substitute(name: String, mapped: Map[Term,Table], op: Table => Table):Map[Term,Table] ={
     val tableName = name.split("\\.").head
-    def matches(term: Term) = (term.term eq tableName) || (term.alias.exists(_ eq tableName))
+    def matches(term: Term) = (term.term == tableName) || (term.alias.exists(_ == tableName))
     val substituted = for{(term,table) <- mapped if matches(term)} yield (term, op(table))
     mapped ++ substituted
   }

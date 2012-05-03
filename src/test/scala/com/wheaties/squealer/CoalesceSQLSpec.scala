@@ -30,6 +30,10 @@ class CoalesceFromClauseSpec extends Specification{
       makeCol("foo.id") must contain(column)
     }
 
+    "substitute a table from an aliased conditoinal on a join" in{
+      makeCol("b.id") must contain(column)
+    }
+
     "substitute nothing if no matching name exists" in{
       makeCol("oh no") must not contain(column)
     }
@@ -122,6 +126,46 @@ class CoalesceFromClauseSpec extends Specification{
       } yield column
 
       nulled must contain(NullableColumnDef("id", "Int", None))
+    }
+  }
+
+  "right joins" should{
+    val tables = Table("foo", None, ColumnDef("id", "Int", None, None) :: Nil) ::
+      Table("bar", None, ColumnDef("id", "Int", None, None) :: Nil) :: Nil
+    val from = From(Term("bar", None) :: RightJoin(Term("foo", None), Conditional("foo.id", "bar.id")) :: Nil)
+    val mapped = CoalesceFromClause(from, tables)
+
+    "produce the columns of both tables joined" in{
+      mapped must be size(2)
+    }
+
+    "force the left hand side's columns to null" in{
+      val nulled = for{
+        (_, table) <- mapped if table.name eq "foo"
+        column <- table.columns
+      } yield column
+
+      nulled must contain(NullableColumnDef("id", "Int", None))
+    }
+  }
+
+  "full joins" should{
+    val tables = Table("foo", None, ColumnDef("id", "Int", None, None) :: Nil) ::
+      Table("bar", None, ColumnDef("id", "Int", None, None) :: Nil) :: Nil
+    val from = From(Term("bar", None) :: FullJoin(Term("foo", None), Conditional("foo.id", "bar.id")) :: Nil)
+    val mapped = CoalesceFromClause(from, tables)
+
+    "produce the columns of both tables joined" in{
+      mapped must be size(2)
+    }
+
+    "force the both table's columns to null" in{
+      val nulled = for{
+        (_, table) <- mapped
+        column <- table.columns
+      } yield column
+
+      nulled count(_ == NullableColumnDef("id", "Int", None)) must be_==(2)
     }
   }
 }
