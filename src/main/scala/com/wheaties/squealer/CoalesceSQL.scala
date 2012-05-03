@@ -39,6 +39,8 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
       (term,table) <- tableMap
       tableName <- termName(term) :: term.term :: Nil
     } yield (tableName, table)
+
+    //TODO: can't assume that each column will be uniquely named across all the tables. Generally they aren't.
     val columnNameMap = for{
       (_, table) <- tableMap
       column <- table.columns
