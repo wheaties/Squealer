@@ -40,7 +40,7 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
       tableName <- termName(term) :: term.term :: Nil
     } yield (tableName, table)
 
-    //TODO: can't assume that each column will be uniquely named across all the tables. Generally they aren't.
+    //TODO: figure out foreign keys and such. Column names generally aren't unique and ambiguity should cause problems.
     val columnNameMap = for{
       (_, table) <- tableMap
       column <- table.columns
@@ -59,7 +59,7 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
     column _
   }
 
-  protected[squealer] def termTable(name: String):(String,String) = name.split(".") match{
+  protected[squealer] def termTable(name: String):(String,String) = name.split("\\.") match{
     case Array(front, back) => (front,back)
     case Array(unique) => ("", unique)
   }
@@ -83,11 +83,11 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
     //TODO: need to handle that case just as well as the case where conditional is foo.id = bar.id
     @tailrec def transform(remainder:List[Expr], mapped:Map[Term,Table]):Map[Term,Table] = remainder match{
       case Term(name, alias) :: xs if exists(name) => transform(xs, mapped)
-      case Join(term, Conditional(left, right)) :: xs if exists(left) && exists(right) => transform(xs, mapped)
-      case LeftJoin(_, Conditional(left, right)) :: xs if exists(left) && exists(right) =>
+      case Join(_, Conditional(left, right)) :: xs if exists(left) && exists(right) => transform(xs, mapped)
+      case LeftJoin(term, Conditional(left, right)) :: xs if exists(left) && exists(right) =>
         val subbed = substitute(right, mapped, nullColumns)
         transform(xs, subbed)
-      case RightJoin(_, Conditional(left, right)) :: xs if exists(left) && exists(right) =>
+      case RightJoin(term, Conditional(left, right)) :: xs if exists(left) && exists(right) =>
         val subbed = substitute(left, mapped, nullColumns)
         transform(xs, subbed)
       case FullJoin(_, Conditional(left, right)) :: xs if exists(left) && exists(right) =>

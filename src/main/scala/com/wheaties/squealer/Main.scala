@@ -24,11 +24,11 @@ object Main extends Squealer{
 trait Squealer{
 
   def action(configName: String) ={
-    val DatabaseStatements(url, user, password, statements) = ConfigParser(configName)
+    val DatabaseStatements(url, user, password, formato, statements) = ConfigParser(configName)
     val source = ParseDataSource(url, user, password)
     val results = statements flatMap{
       _ match{
-        case x:TableStatement => generateTable(x, source)
+        case x:TableStatement => generateTable(x, source, formato)
         case x:ClassStatement => generateClass(x, source)
       }
     }
@@ -36,8 +36,8 @@ trait Squealer{
     results.map(write)
   }
 
-  def generateTable(statement: TableStatement, dataSource: Database, formatter: (Table => Table) = CamelCase) ={
-    val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield PureTable(table, statement.pack, formatter)
+  def generateTable(statement: TableStatement, dataSource: Database, formato: Formato = CamelCase) ={
+    val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield PureTable(table, statement.pack, formato)
     tree.map(ParsedResult(statement.pack, statement.name, _))
   }
 
