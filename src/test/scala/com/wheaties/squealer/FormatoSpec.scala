@@ -15,6 +15,10 @@ class FormatoSpec extends Specification{
     "handle pascal case" in{
       CamelCase.format("HelloWorld") must be_==("helloWorld")
     }
+
+    "handle spaces" in{
+      CamelCase.format("hello world") must be_==("helloWorld")
+    }
   }
 
   "camelCase (tables)" should{
@@ -38,6 +42,18 @@ class FormatoSpec extends Specification{
 
     "handle column name identity" in{
       CamelCase(table("name", "columnName")).columns.head.name must be_==("columnName")
+    }
+  }
+
+  "regex format" should{
+    "replace digits with nothing" in{
+      val regex = new RegexFormato("[\\d]", "")
+      regex.format("foo21bar") must be_==("foobar")
+    }
+
+    "replace foo with bar" in{
+      val regex = new RegexFormato("foo", "bar")
+      regex.format("foobar") must be_==("barbar")
     }
   }
 }

@@ -17,8 +17,7 @@ object Main extends Squealer{
  * TODO:
  * 1. Get SQL parsing working
  * 2. Get the validation between SQL statements and DB structure working
- * 3. Get the column conversions for Nullables (think LEFT JOIN) and aliases (think cf.foo AS bar)
- * 4. Get it all working like the pure tables. First step can be empty SQL statements!
+ * 3. Get it all working like the pure tables. First step can be empty SQL statements!
  */
 
 trait Squealer{

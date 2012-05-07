@@ -48,10 +48,10 @@ object CamelCase extends Formato{
    *  Change "HelloWorld" to "helloWorld"
    *  Change "Hello_World" to "helloWorld"
    */
-  protected[squealer] def format(in: String): String = in.split("[_/s]").toList match{
+  protected[squealer] def format(in: String): String = in.split("[_\\s]").toList match{
     case word :: Nil if word.nonEmpty => word.charAt(0).toLower + word.drop(1)
     case firstWord :: rest => firstWord.toLowerCase + rest.map(_.capitalize).mkString
-    case _ => ""
+    case Nil => ""
   }
 }
 

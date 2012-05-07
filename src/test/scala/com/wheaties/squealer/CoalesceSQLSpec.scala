@@ -169,3 +169,26 @@ class CoalesceFromClauseSpec extends Specification{
     }
   }
 }
+
+class CoalesceSelectClauseSpec extends Specification{
+  "findColumn" should{
+    val fooCol = ColumnDef("one", "Double", None, None)
+    val barCol = ColumnDef("two", "Double", None, None)
+    val mapped = Map(Term("foo", None) -> Table("foo", None, fooCol :: Nil),
+      Term("bar", Some("b")) -> Table("bar", None, barCol :: Nil))
+
+    val findColumn = CoalesceSelectClause.findColumn(mapped)
+
+    "return a function that identifies columns by name" in{
+      findColumn("foo.one") must be_==(Some(fooCol))
+    }
+
+    "return a function that identifies columns by alias" in{
+      findColumn("b.two") must be_==(Some(barCol))
+    }
+
+    "not identify the right column from the wrong table" in{
+      findColumn("bar.one") must beNone
+    }
+  }
+}
