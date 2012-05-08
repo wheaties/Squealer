@@ -193,25 +193,31 @@ class CoalesceSelectClauseSpec extends Specification{
   }
 
   "CoalesceSelectClause" should{
-    "handle selects where the tables are present" in{
-      val select = Select(Term("foo", None) :: Nil)
-      val fooCol = ColumnDef("id", "Int", None, None)
-      val tableMap = Map(Term("foo", None) -> Table("foo", None, fooCol :: Nil))
-      val output = CoalesceSelectClause(select, tableMap)
+    val fooCol = ColumnDef("id", "Int", None, None)
+    val tableMap = Map(Term("foo", None) -> Table("foo", None, fooCol :: Nil))
 
-      output must contain(fooCol)
+    "handle selects where the tables are present" in{
+      val select = Select(Term("id", None) :: Nil)
+
+      CoalesceSelectClause(select, tableMap) must contain(fooCol)
     }
 
     "rename columns if aliased" in{
-      true must beFalse
+      val select = Select(Term("id", Some("identity")) :: Nil)
+
+      CoalesceSelectClause(select, tableMap) must contain(fooCol.copy(name = "identity"))
     }
 
     "work with wildcards" in{
-      true must beFalse
+      val select = Select(Wildcard :: Nil)
+
+      CoalesceSelectClause(select, tableMap) must contain(fooCol)
     }
 
     "work with Counts" in{
-      true must beFalse
+      val select = Select(Count("id", Some("sum")) :: Nil)
+
+      CoalesceSelectClause(select, tableMap) must contain(ColumnDef("sum", "Int", None, None))
     }
   }
 }
