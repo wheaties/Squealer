@@ -26,7 +26,7 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
       _ match{
         case Wildcard => tableMap.values.flatMap(_.columns).toList
         case phrase:Count if columnMap(phrase.term).isDefined => List(ColumnDef(termName(phrase), "Int", None, None))
-        case phrase:Term => columnMap(phrase.term)
+        case phrase:Term => columnMap(phrase.term) map(ReformatColumn(_, _ => termName(phrase)))
         case _ => List.empty[Column] //how'd this happen!?
       }
     }

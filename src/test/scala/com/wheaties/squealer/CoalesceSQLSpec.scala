@@ -191,4 +191,27 @@ class CoalesceSelectClauseSpec extends Specification{
       findColumn("bar.one") must beNone
     }
   }
+
+  "CoalesceSelectClause" should{
+    "handle selects where the tables are present" in{
+      val select = Select(Term("foo", None) :: Nil)
+      val fooCol = ColumnDef("id", "Int", None, None)
+      val tableMap = Map(Term("foo", None) -> Table("foo", None, fooCol :: Nil))
+      val output = CoalesceSelectClause(select, tableMap)
+
+      output must contain(fooCol)
+    }
+
+    "rename columns if aliased" in{
+      true must beFalse
+    }
+
+    "work with wildcards" in{
+      true must beFalse
+    }
+
+    "work with Counts" in{
+      true must beFalse
+    }
+  }
 }
