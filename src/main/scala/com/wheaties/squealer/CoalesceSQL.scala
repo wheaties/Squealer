@@ -2,6 +2,7 @@ package com.wheaties.squealer
 
 import annotation.tailrec
 
+//TODO: I think I'm going at this in the wrong direction. Not bottom up, should be top down...
 object CoalesceSQL{
   def apply(source: Database, sql: Expr) = sql match{
     case x:SQL =>
@@ -73,6 +74,7 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
 }
 
 //TODO: capture errors!
+//TODO: From clauses can contain selects, unions, and pretty much everything else under the Sun...
 object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
 
   def apply(fromClause: From, tables: List[Table]) ={

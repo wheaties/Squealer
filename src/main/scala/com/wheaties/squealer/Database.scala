@@ -20,6 +20,7 @@ trait WithLength{
   def length: Int
 }
 
+//TODO: you know, I could lose most of the overhead of dealing with different column objects if I created a case Class as a variable...
 case class ColumnDef(name: String, typeOf: String, default: Option[String], comment: Option[String]) extends Column
 case class NullableColumnDef(name: String, typeOf: String, comment: Option[String]) extends Column
 case class PrimaryKeyDef(name: String, typeOf: String, default: Option[String], comment: Option[String]) extends Column
