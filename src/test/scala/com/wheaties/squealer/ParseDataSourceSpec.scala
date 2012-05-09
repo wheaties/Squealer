@@ -46,14 +46,14 @@ class ParseDataSourceSpec extends Specification{
       val output = ParseDataSource.parseColumns(con.getMetaData, "BAR")
       val head = output.headOption
       head.map(_.name).getOrElse("") must be_==("ID")
-      head.exists(_.isInstanceOf[PrimaryKeyDef]) must beTrue
+      head.exists(_.colType == PrimaryKey) must beTrue
     }
 
     "produce a nullable column" in{
       val output = ParseDataSource.parseColumns(con.getMetaData, "FOO")
       val head = output.headOption
       head.map(_.name).getOrElse("") must be_==("ID")
-      head.exists(_.isInstanceOf[NullableColumnDef]) must beTrue
+      head.exists(_.colType == NullableColumn) must beTrue
     }
   }
 }

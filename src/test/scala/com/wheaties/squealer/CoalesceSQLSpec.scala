@@ -10,7 +10,7 @@ class CoalesceSQLSpec {
 class CoalesceFromClauseSpec extends Specification{
   "substitute" should{
     val mapped = Map(Term("foo", None) -> Table("foo", None, Nil), Term("bar", Some("b")) -> Table("bar", None, Nil))
-    val column = ColumnDef("yo", "Int", None, None)
+    val column = Column("yo", "Int", None, None, ColumnDef)
     def makeCol(name: String) ={
       val output = CoalesceFromClause.substitute(name, mapped, _.copy(columns = List(column)))
       for{
@@ -40,10 +40,10 @@ class CoalesceFromClauseSpec extends Specification{
   }
 
   "nullColumns" in{
-    val table = Table("foo", None, ColumnDef("bar", "Int", None, None) :: Nil)
+    val table = Table("foo", None, Column("bar", "Int", None, None, ColumnDef) :: Nil)
     val nulled = CoalesceFromClause.nullColumns(table)
 
-    nulled.columns must contain(NullableColumnDef("bar", "Int", None))
+    nulled.columns must contain(Column("bar", "Int", None, None, NullableColumn))
   }
 
   "extractTerms" should{
@@ -110,8 +110,8 @@ class CoalesceFromClauseSpec extends Specification{
   }
 
   "left joins" should{
-    val tables = Table("foo", None, ColumnDef("id", "Int", None, None) :: Nil) ::
-      Table("bar", None, ColumnDef("id", "Int", None, None) :: Nil) :: Nil
+    val tables = Table("foo", None, Column("id", "Int", None, None, ColumnDef) :: Nil) ::
+      Table("bar", None, Column("id", "Int", None, None, ColumnDef) :: Nil) :: Nil
     val from = From(Term("bar", None) :: LeftJoin(Term("foo", None), Conditional("foo.id", "bar.id")) :: Nil)
     val mapped = CoalesceFromClause(from, tables)
 
@@ -125,13 +125,13 @@ class CoalesceFromClauseSpec extends Specification{
         column <- table.columns
       } yield column
 
-      nulled must contain(NullableColumnDef("id", "Int", None))
+      nulled must contain(Column("id", "Int", None, None, NullableColumn))
     }
   }
 
   "right joins" should{
-    val tables = Table("foo", None, ColumnDef("id", "Int", None, None) :: Nil) ::
-      Table("bar", None, ColumnDef("id", "Int", None, None) :: Nil) :: Nil
+    val tables = Table("foo", None, Column("id", "Int", None, None, ColumnDef) :: Nil) ::
+      Table("bar", None, Column("id", "Int", None, None, ColumnDef) :: Nil) :: Nil
     val from = From(Term("bar", None) :: RightJoin(Term("foo", None), Conditional("foo.id", "bar.id")) :: Nil)
     val mapped = CoalesceFromClause(from, tables)
 
@@ -145,13 +145,13 @@ class CoalesceFromClauseSpec extends Specification{
         column <- table.columns
       } yield column
 
-      nulled must contain(NullableColumnDef("id", "Int", None))
+      nulled must contain(Column("id", "Int", None, None, NullableColumn))
     }
   }
 
   "full joins" should{
-    val tables = Table("foo", None, ColumnDef("id", "Int", None, None) :: Nil) ::
-      Table("bar", None, ColumnDef("id", "Int", None, None) :: Nil) :: Nil
+    val tables = Table("foo", None, Column("id", "Int", None, None, ColumnDef) :: Nil) ::
+      Table("bar", None, Column("id", "Int", None, None, ColumnDef) :: Nil) :: Nil
     val from = From(Term("bar", None) :: FullJoin(Term("foo", None), Conditional("foo.id", "bar.id")) :: Nil)
     val mapped = CoalesceFromClause(from, tables)
 
@@ -165,15 +165,15 @@ class CoalesceFromClauseSpec extends Specification{
         column <- table.columns
       } yield column
 
-      nulled count(_ == NullableColumnDef("id", "Int", None)) must be_==(2)
+      nulled count(_ == Column("id", "Int", None, None, NullableColumn)) must be_==(2)
     }
   }
 }
 
 class CoalesceSelectClauseSpec extends Specification{
   "findColumn" should{
-    val fooCol = ColumnDef("one", "Double", None, None)
-    val barCol = ColumnDef("two", "Double", None, None)
+    val fooCol = Column("one", "Double", None, None, ColumnDef)
+    val barCol = Column("two", "Double", None, None, ColumnDef)
     val mapped = Map(Term("foo", None) -> Table("foo", None, fooCol :: Nil),
       Term("bar", Some("b")) -> Table("bar", None, barCol :: Nil))
 
@@ -193,7 +193,7 @@ class CoalesceSelectClauseSpec extends Specification{
   }
 
   "CoalesceSelectClause" should{
-    val fooCol = ColumnDef("id", "Int", None, None)
+    val fooCol = Column("id", "Int", None, None, ColumnDef)
     val tableMap = Map(Term("foo", None) -> Table("foo", None, fooCol :: Nil))
 
     "handle selects where the tables are present" in{
@@ -217,7 +217,7 @@ class CoalesceSelectClauseSpec extends Specification{
     "work with Counts" in{
       val select = Select(Count("id", Some("sum")) :: Nil)
 
-      CoalesceSelectClause(select, tableMap) must contain(ColumnDef("sum", "Int", None, None))
+      CoalesceSelectClause(select, tableMap) must contain(Column("sum", "Int", None, None, ColumnDef))
     }
   }
 }
