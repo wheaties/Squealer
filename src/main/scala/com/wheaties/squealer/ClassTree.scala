@@ -41,12 +41,12 @@ object ConstructorTree extends ((String,List[Column]) => ClassDefStart){
     val withDefault = defaultStart(params)
     params.map{
       _ match{
-        case ColumnDef(name, typeOf, Some(default), _) => withDefault(name, typeOf, default)
-        case ColumnDef(name, typeOf, _, _) => start(name, typeOf)
-        case NullableColumnDef(name, typeOf, _) => start(name, TYPE_OPTION(typeOf))
-        case NullablePrimaryKey(name, typeOf, _) => start(name, TYPE_OPTION(typeOf))
-        case PrimaryKeyDef(name, typeOf, Some(default), _) => withDefault(name, typeOf, default)
-        case PrimaryKeyDef(name, typeOf, _, _) => start(name, typeOf)
+        case Column(name, typeOf, Some(default), _, ColumnDef) => withDefault(name, typeOf, default)
+        case Column(name, typeOf, _, _, ColumnDef) => start(name, typeOf)
+        case Column(name, typeOf, _, _, NullableColumn) => start(name, TYPE_OPTION(typeOf))
+        case Column(name, typeOf, _, _, NullablePrimaryKey) => start(name, TYPE_OPTION(typeOf))
+        case Column(name, typeOf, Some(default), _, PrimaryKey) => withDefault(name, typeOf, default)
+        case Column(name, typeOf, _, _, PrimaryKey) => start(name, typeOf)
       }
     }
   }
@@ -55,10 +55,10 @@ object ConstructorTree extends ((String,List[Column]) => ClassDefStart){
 object AssumptionTree extends (List[Column] => List[Tree]){
   def apply(params: List[Column]):List[Tree] = {
     @tailrec def make(remainder: List[Column], acc: List[Tree] = Nil):List[Tree] = remainder match{
-      case NullableColumnDef(name, _, _) :: xs if check(remainder.head) =>
+      case Column(name, _, _, _, NullableColumn) :: xs if check(remainder.head) =>
         val assumeOpt = REF(name) MAP LAMBDA(PARAM("x")) ==> makeAssumption(remainder.head, "x")
         make(xs, assumeOpt :: acc)
-      case NullablePrimaryKey(name, _, _) :: xs if check(remainder.head) =>
+      case Column(name, _, _, _, NullablePrimaryKey) :: xs if check(remainder.head) =>
         val assumeOpt = REF(name) MAP LAMBDA(PARAM("x")) ==> makeAssumption(remainder.head, "x")
         make(xs, assumeOpt :: acc)
       case x :: xs if check(x) => make(xs, makeAssumption(x, x.name) :: acc)
@@ -90,7 +90,7 @@ object AssumptionTree extends (List[Column] => List[Tree]){
 
 object HashCodeTree extends (List[Column] => Tree){
   def apply(params: List[Column]):Tree ={
-    if(params.exists(col => col.isInstanceOf[PrimaryKeyDef] || col.isInstanceOf[NullablePrimaryKey])){
+    if(params.exists(col => col.colType == PrimaryKey || col.colType == NullablePrimaryKey)){
       DEF("hashCode") withFlags(Flags.OVERRIDE) := defineHashCode(withKeys(params))
     }
     else if(params.length > 22){
@@ -108,10 +108,10 @@ object HashCodeTree extends (List[Column] => Tree){
   }
 
   @tailrec private[squealer] def withKeys(remainder: List[Column], acc: List[SelectStart] = Nil):List[SelectStart] = remainder match{
-    case PrimaryKeyDef(name, _, _ ,_) :: xs =>
+    case Column(name, _, _ ,_, PrimaryKey) :: xs =>
       val key = REF(name) DOT "hashCode"
       withKeys(xs, key :: acc)
-    case NullablePrimaryKey(name, _, _) :: xs =>
+    case Column(name, _, _, _, NullablePrimaryKey) :: xs =>
       val key = REF(name) DOT "hashCode"
       withKeys(xs, key :: acc)
     case x :: xs => withKeys(xs, acc)
@@ -123,7 +123,7 @@ object HashCodeTree extends (List[Column] => Tree){
 
 object EqualsTree extends ((String, List[Column]) => Tree){
   def apply(tableName: String, params: List[Column]):Tree ={
-    if(params.exists(col => col.isInstanceOf[PrimaryKeyDef] || col.isInstanceOf[NullablePrimaryKey])){
+    if(params.exists(col => col.colType == PrimaryKey || col.colType == NullablePrimaryKey)){
       defineEquals(makeWithKeys(tableName, params))
     }
     else if(params.size > 22){
@@ -146,10 +146,10 @@ object EqualsTree extends ((String, List[Column]) => Tree){
   }
 
   @tailrec private[squealer] def withKeys(remainder: List[Column], acc: List[Infix] = Nil):Infix = remainder match{
-    case PrimaryKeyDef(name, _, _, _) :: xs =>
+    case Column(name, _, _, _, PrimaryKey) :: xs =>
       val param = (THIS DOT name) OBJ_EQ (REF("that") DOT name)
       withKeys(xs, param :: acc)
-    case NullablePrimaryKey(name, _, _) :: xs =>
+    case Column(name, _, _, _, NullablePrimaryKey) :: xs =>
       val param = (THIS DOT name) OBJ_EQ (REF("that") DOT name)
       withKeys(xs, param :: acc)
     case x :: xs => withKeys(xs, acc)
@@ -158,8 +158,8 @@ object EqualsTree extends ((String, List[Column]) => Tree){
 
   private[squealer] def pattern(params: List[Column]):List[Ident] = params map{
     _ match{
-        case PrimaryKeyDef(name, _, _, _) => ID(name)
-        case NullablePrimaryKey(name, _, _) => ID(name)
+        case Column(name, _, _, _, PrimaryKey) => ID(name)
+        case Column(name, _, _, _, NullablePrimaryKey) => ID(name)
         case _ => WILDCARD
     }
   }

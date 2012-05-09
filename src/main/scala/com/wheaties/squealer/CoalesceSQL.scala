@@ -26,7 +26,7 @@ object CoalesceSelectClause extends ((Select, Map[Term,Table]) => List[Column]){
     val columns = select.terms flatMap{
       _ match{
         case Wildcard => tableMap.values.flatMap(_.columns).toList
-        case phrase:Count if columnMap(phrase.term).isDefined => List(ColumnDef(termName(phrase), "Int", None, None))
+        case phrase:Count if columnMap(phrase.term).isDefined => List(Column(termName(phrase), "Int", None, None, ColumnDef))
         case phrase:Term => columnMap(phrase.term) map(ReformatColumn(_, _ => termName(phrase)))
         case _ => List.empty[Column] //how'd this happen!?
       }
@@ -123,7 +123,7 @@ object CoalesceFromClause extends ((From, List[Table]) => Map[Term,Table]){
 
   protected[squealer] def nullColumns(table: Table)={
     val columns = table.columns map{col =>
-      new NullableColumnDef(col.name, col.typeOf, col.comment){
+      new Column(col.name, col.typeOf, col.default, col.comment, NullableColumn){
         override def size: Int = col.size
         override def precision: Int = col.precision
         override def scale: Int = col.scale
