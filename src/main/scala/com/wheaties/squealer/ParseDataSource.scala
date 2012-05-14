@@ -45,6 +45,7 @@ object ParseDataSource extends ((String,String,String) => Database){
   /**
    * TODO: Columns can have constraints. They can be limited to a set, a range , a condition or computed.
    * Think about how to capture it. Computed columns constraints are generally computed with values from the same row.
+   * This is more than likely database specific.
    */
   protected[squealer] def parseColumns(meta: DatabaseMetaData, tableName: String):List[Column] ={
     val keys = parsePrimaryKeys(meta, tableName)
