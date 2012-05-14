@@ -15,4 +15,10 @@ class SquealerSpec extends Specification{
       builder ++= treeToString(result.ast)
     }
   }
+
+  "generateTable" should{
+    "produce a named table" in{
+      false must beTrue
+    }
+  }
 }

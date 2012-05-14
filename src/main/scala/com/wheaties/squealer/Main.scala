@@ -22,7 +22,7 @@ object Main extends Squealer{
 
 trait Squealer{
 
-  def action(configName: String) ={
+  def action(configName: String)(implicit recorder: Recorder[ParsedResult]) ={
     val DatabaseStatements(url, user, password, formato, statements) = ConfigParser(configName)
     val source = ParseDataSource(url, user, password)
     val results = statements flatMap{
@@ -32,7 +32,7 @@ trait Squealer{
       }
     }
 
-    results.map(write)
+    results.map(recorder.record)
   }
 
   def generateTable(statement: TableStatement, dataSource: Database, formato: Formato = CamelCase) ={
@@ -44,7 +44,4 @@ trait Squealer{
   def generateClass(statement: ClassStatement, dataSource: Database) ={
     None
   }
-
-  //Really? Am I really making this more unit testable!?
-  def write(result: ParsedResult)(implicit recorder: Recorder[ParsedResult]) = recorder.record(result)
 }
