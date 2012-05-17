@@ -6,6 +6,9 @@ import definitions._
 import treehuggerDSL._
 import java.sql.DriverManager
 
+/**
+ * Part unit test, part integration test. Mostly integration test.
+ */
 class SquealerSpec extends Specification{
   val squeal = new Object with Squealer
 

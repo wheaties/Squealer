@@ -18,7 +18,7 @@ object ConfigParser extends (String => DatabaseStatements){
   val URL = "url"
   val PASSWORD = "password"
   val USER = "user"
-  val GROUPS = "groups"
+  val QUERIES = "queries"
   val TABLES = "tables"
   val FORMAT = "format"
   val REGEX = "regex"
@@ -26,7 +26,7 @@ object ConfigParser extends (String => DatabaseStatements){
 
   def apply(fileName: String) ={
     val config = ConfigFactory.load(fileName)
-    val groups = if(config.hasPath(GROUPS)) parseGroups(config) else Nil
+    val groups = if(config.hasPath(QUERIES)) parseQueries(config) else Nil
     val tables = if(config.hasPath(TABLES)) parseTables(config) else Nil
     val formato = if(config.hasPath(FORMAT)) parseFormat(config) else CamelCase
     val url = config.getString(URL)
@@ -36,19 +36,19 @@ object ConfigParser extends (String => DatabaseStatements){
     DatabaseStatements(url, user, password, formato, groups ::: tables)
   }
 
-  protected def parseGroups(config: Config) = for{
-      entry <- JListWrapper(config.getConfigList(GROUPS)).toList
-      statement <- unpackGroup(entry)
+  protected[squealer] def parseQueries(config: Config) = for{
+      entry <- JListWrapper(config.getConfigList(QUERIES)).toList
+      statement <- unpackQuery(entry)
     } yield statement
 
-  protected def unpackGroup(config: Config)= try{
+  protected[squealer] def unpackQuery(config: Config)= try{
     Some(ClassStatement(config.getString(PACKAGE), config.getString(CLASS_NAME), config.getString(SQL_STATEMENT)))
   }
   catch{
     case ex => println(ex.getMessage); None
   }
 
-  protected def parseTables(config: Config) = try{
+  protected[squealer] def parseTables(config: Config) = try{
     val pack = config.getString(PACKAGE)
     for(table <- JListWrapper(config.getStringList(TABLES)).toList) yield TableStatement(pack, table)
   }
@@ -56,7 +56,7 @@ object ConfigParser extends (String => DatabaseStatements){
     case ex => println(ex.getMessage); Nil
   }
 
-  protected def parseFormat(config: Config) = try{
+  protected[squealer] def parseFormat(config: Config) = try{
     val path = config.getConfig(FORMAT)
     val regex = path.getString(REGEX)
     val replaceWith = path.getString(REPLACE_WITH)
