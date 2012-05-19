@@ -11,6 +11,7 @@ case class TableStatement(pack: String, name: String) extends Statement
 case class ClassStatement(pack: String, name: String, statement: String) extends Statement
 case class DatabaseStatements(url: String, user: String, password: String, formato: Formato, statements: List[Statement])
 
+//TODO: wouldn't it be nice to set every table's name and package like trying to do with SQL statements?
 object ConfigParser extends (String => DatabaseStatements){
   val PACKAGE = "package"
   val CLASS_NAME = "class_name"
@@ -20,6 +21,7 @@ object ConfigParser extends (String => DatabaseStatements){
   val USER = "user"
   val QUERIES = "queries"
   val TABLES = "tables"
+  val NAMES = "names"
   val FORMAT = "format"
   val REGEX = "regex"
   val REPLACE_WITH = "replace_with"
@@ -27,7 +29,7 @@ object ConfigParser extends (String => DatabaseStatements){
   def apply(fileName: String) ={
     val config = ConfigFactory.load(fileName)
     val groups = if(config.hasPath(QUERIES)) parseQueries(config) else Nil
-    val tables = if(config.hasPath(TABLES)) parseTables(config) else Nil
+    val tables = if(config.hasPath(TABLES)) parseTables(config.getConfig(TABLES)) else Nil
     val formato = if(config.hasPath(FORMAT)) parseFormat(config) else CamelCase
     val url = config.getString(URL)
     val user = config.getString(USER)
@@ -50,7 +52,7 @@ object ConfigParser extends (String => DatabaseStatements){
 
   protected[squealer] def parseTables(config: Config) = try{
     val pack = config.getString(PACKAGE)
-    for(table <- JListWrapper(config.getStringList(TABLES)).toList) yield TableStatement(pack, table)
+    for(table <- JListWrapper(config.getStringList(NAMES)).toList) yield TableStatement(pack, table)
   }
   catch{
     case ex => println(ex.getMessage); Nil
