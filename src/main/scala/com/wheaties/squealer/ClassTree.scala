@@ -6,8 +6,6 @@ import treehuggerDSL._
 import scala.annotation._
 import java.util.Date
 
-//TODO: some column names can have spaces! @#$% me.
-
 object ScalaDocTree extends ((String,List[Column]) => (Tree => Tree)){
   def apply(name: String, params: List[Column]) ={
     val date = new Date(System.currentTimeMillis())
@@ -147,10 +145,10 @@ object EqualsTree extends ((String, List[Column]) => Tree){
 
   @tailrec private[squealer] def withKeys(remainder: List[Column], acc: List[Infix] = Nil):Infix = remainder match{
     case Column(name, _, _, _, PrimaryKey) :: xs =>
-      val param = (THIS DOT name) OBJ_EQ (REF("that") DOT name)
+      val param = (THIS DOT name) ANY_== (REF("that") DOT name)
       withKeys(xs, param :: acc)
     case Column(name, _, _, _, NullablePrimaryKey) :: xs =>
-      val param = (THIS DOT name) OBJ_EQ (REF("that") DOT name)
+      val param = (THIS DOT name) ANY_== (REF("that") DOT name)
       withKeys(xs, param :: acc)
     case x :: xs => withKeys(xs, acc)
     case Nil => acc.reduce((left, right) => left AND right)
@@ -169,7 +167,7 @@ object EqualsTree extends ((String, List[Column]) => Tree){
   }
 
   private[squealer] def withoutKeys(params: List[Column]):Infix ={
-    val checks = params.map(col => (THIS DOT col.name) OBJ_EQ (REF("that") DOT col.name) )
+    val checks = params.map(col => (THIS DOT col.name) ANY_== (REF("that") DOT col.name) )
     checks.reduce((left, right) => left AND right)
   }
 }
