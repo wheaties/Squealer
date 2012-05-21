@@ -2,6 +2,11 @@ package com.wheaties.squealer
 
 import annotation.tailrec
 
+/**
+ * Ok, the first time you write something you figure out what you did wrong. The second time, it's much easier.
+ * Right? Right...?
+ */
+
 //TODO: I think I'm going at this in the wrong direction. Not bottom up, should be top down...
 object CoalesceSQL{
   def apply(source: Database, sql: Expr) = sql match{
