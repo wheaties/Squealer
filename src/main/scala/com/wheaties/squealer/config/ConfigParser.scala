@@ -1,5 +1,6 @@
-package com.wheaties.squealer
+package com.wheaties.squealer.config
 
+import com.wheaties.squealer.generator._
 import collection.JavaConversions.JListWrapper
 import com.typesafe.config.{Config, ConfigFactory}
 

@@ -1,4 +1,4 @@
-package com.wheaties.squealer
+package com.wheaties.squealer.db
 
 import org.specs2.mutable.Specification
 import java.sql.{DatabaseMetaData, DriverManager}

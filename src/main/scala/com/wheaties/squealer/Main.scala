@@ -1,6 +1,10 @@
 package com.wheaties.squealer
 
-import com.wheaties.squealer.Implicits._
+import config._
+import db._
+import generator._
+import generator.scala._
+import Implicits._
 
 object Main extends Squealer{
   def main(args: Array[String]){
@@ -15,9 +19,8 @@ object Main extends Squealer{
 
 /*
  * TODO:
- * 1. Get SQL parsing working
- * 2. Get the validation between SQL statements and DB structure working
- * 3. Get it all working like the pure tables. First step can be empty SQL statements!
+ * 1. Get the validation between SQL statements and DB structure working
+ * 2. Get it all working like the pure tables. First step can be empty SQL statements!
  */
 
 trait Squealer{

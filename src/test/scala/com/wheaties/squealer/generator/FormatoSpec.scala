@@ -1,5 +1,6 @@
-package com.wheaties.squealer
+package com.wheaties.squealer.generator
 
+import com.wheaties.squealer.db._
 import org.specs2.mutable.Specification
 
 class FormatoSpec extends Specification{

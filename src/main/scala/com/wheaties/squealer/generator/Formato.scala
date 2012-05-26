@@ -1,4 +1,6 @@
-package com.wheaties.squealer
+package com.wheaties.squealer.generator
+
+import com.wheaties.squealer.db._
 
 object ReformatColumn extends ((Column,String => String) => Column){
   def apply(column: Column, format: String => String):Column={

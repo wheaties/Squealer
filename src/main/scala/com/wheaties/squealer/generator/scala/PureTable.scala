@@ -1,5 +1,6 @@
-package com.wheaties.squealer
+package com.wheaties.squealer.generator.scala
 
+import com.wheaties.squealer.db._
 import treehugger.forest._
 import treehuggerDSL._
 

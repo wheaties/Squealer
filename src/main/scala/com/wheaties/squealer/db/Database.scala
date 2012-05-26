@@ -1,4 +1,4 @@
-package com.wheaties.squealer
+package com.wheaties.squealer.db
 
 case class Column(name: String, typeOf: String, default: Option[String], comment: Option[String], colType: ColumnType){
   def size: Int = 0

@@ -1,4 +1,4 @@
-package com.wheaties.squealer
+package com.wheaties.squealer.db
 
 import java.sql.Types._
 import java.sql.{Connection, DriverManager, DatabaseMetaData}
