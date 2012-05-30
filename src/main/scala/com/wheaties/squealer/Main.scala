@@ -2,9 +2,10 @@ package com.wheaties.squealer
 
 import config._
 import db._
-import generator._
-import generator.scala._
+import generator.{Formato, CamelCase}
+import generator.scala.PureTable
 import Implicits._
+import sql.CoalesceSQL
 
 object Main extends Squealer{
   def main(args: Array[String]){
@@ -45,6 +46,7 @@ trait Squealer{
 
   //TODO: finish me once we've got the SQL AST figured out
   def generateClass(statement: ClassStatement, dataSource: Database) ={
+    CoalesceSQL(dataSource, statement.statement)
     None
   }
 }
