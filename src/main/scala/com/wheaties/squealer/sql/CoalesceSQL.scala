@@ -1,10 +1,10 @@
 package com.wheaties.squealer.sql
 
 import com.wheaties.squealer.db.Database
+import com.wheaties.squealer.db.{Column => DBColumn}
+import com.wheaties.squealer.db.{Table => DBTable}
 import annotation.tailrec
 import seekwell._
-
-//TODO: handle package name collisions between Seekwell and Squealer
 
 //TODO: first make SELECT * FROM tablename work!
 object CoalesceSQL{
@@ -21,7 +21,7 @@ object CoalesceSQL{
   }
 
   //TODO: don't forget about counts
-  @tailrec final def selectClause(select: List[Expression], some: List[Int]):List[Int]={
+  @tailrec final def selectClause(select: List[Expression], columns: List[DBColumn]):List[DBColumn]={
     select match{
       case Aliased(expr, alias) :: xs =>
       case Column(Some(table), name) :: xs =>
@@ -29,13 +29,13 @@ object CoalesceSQL{
       case Wildcard(Some(table)) :: xs =>
       case Wildcard(None) :: xs =>
       case Function(expr, name) :: xs =>
-      case _ :: xs => selectClause(xs, some)
-      case Nil => some
+      case _ :: xs => selectClause(xs, columns)
+      case Nil => columns
     }
   }
 
   //TODO: ask Max if I even need to worry about these
-  @tailrec final def fromClause(from: List[Table], tables: List[Int]):List[Int] ={
+  @tailrec final def fromClause(from: List[Table], tables: List[DBTable]):List[DBTable] ={
     from match{
       case Table(names, Some(alias)) =>
       case Table(names, None) =>
@@ -47,11 +47,33 @@ object CoalesceSQL{
   }
 
   //Determines the nullability of columns
-  protected[squealer] def joinClause(joins: List[Join])={
+  protected[squealer] def joinClause(joins: List[Join]) ={
     joins map{
-      case Join(joinKind, table, Some(Using(columns)) =>
+      case Join(joinKind, table, Some(Using(columns))) if columns.nonEmpty =>
       case Join(joinKind, table, Some(On(condition))) =>
       case Join(joinKind, table, None) => //TODO: ask Max what exactly this means
     }
+  }
+
+  protected[squealer] def joinWithCondition(joinKind: JoinKind, table: Table, condition: Condition)={
+    joinKind match{
+      case LeftOuter =>
+      case RightOuter =>
+      case FullOuter =>
+      case Inner =>
+      case Cross =>
+      case Natural =>
+      case Equi =>
+    }
+  }
+
+  //TODO: will need access to the tables it applies to!
+  @tailrec final protected[squealer] def parseCondition(condition: Condition) = condition match{
+    case UnaryCondition(expr, IsNotNull) =>
+    case UnaryCondition(expr, IsNull) =>
+    case LogicalCondition(condition1, op, condition2) =>
+    case InCondition(expr, inOp, Left(select:SelectStatement)) =>
+    case InCondition(expr, inOp, Right(exprs)) if exprs.nonEmpty =>
+    case BetweenCondition(expr, betweenOp, fromExpr, toExpr) =>
   }
 }
