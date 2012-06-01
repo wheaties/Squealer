@@ -23,10 +23,5 @@ case object NullableColumn extends ColumnType
 case object PrimaryKey extends ColumnType
 case object NullablePrimaryKey extends ColumnType
 
-//case class ColumnDef(name: String, typeOf: String, default: Option[String], comment: Option[String]) extends Column
-//case class NullableColumnDef(name: String, typeOf: String, comment: Option[String]) extends Column
-//case class PrimaryKeyDef(name: String, typeOf: String, default: Option[String], comment: Option[String]) extends Column
-//case class NullablePrimaryKey(name: String, typeOf: String, comment: Option[String]) extends Column
-
 case class Database(name: String, tables: List[Table])
 case class Table(name: String, comment: Option[String], columns: List[Column])
