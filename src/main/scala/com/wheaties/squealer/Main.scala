@@ -46,7 +46,7 @@ trait Squealer{
 
   //TODO: finish me once we've got the SQL AST figured out
   def generateClass(statement: ClassStatement, dataSource: Database) ={
-    CoalesceSQL(dataSource, statement.statement)
+    new CoalesceSQL(dataSource)(statement.statement)
     None
   }
 }

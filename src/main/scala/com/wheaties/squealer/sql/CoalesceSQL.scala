@@ -12,7 +12,6 @@ class CoalesceSQL(source: Database){
   def apply(sql: String) = StatementParser[Statement](sql) match{
     case select:SelectStatement => Unit
     case insert:InsertStatement => Unit
-    case InsertStatement(table, columns, values) => Unit
     case _ => Unit
   }
 
@@ -27,12 +26,13 @@ class CoalesceSQL(source: Database){
     create(select, tableMap)
   }
 
-  def validateWhere(where: Where, tables: Map[String,DBTable])
-  def validateGroupBy(groupBy: GroupBy, tables: Map[String,DBTable])
-  def validateOrderBy(orderBy: OrderBy, tables: Map[String,DBTable])
+  def validateWhere(where: Where, tables: Map[String,DBTable]) = true
+  def validateGroupBy(groupBy: GroupBy, tables: Map[String,DBTable]) = true
+  def validateOrderBy(orderBy: OrderBy, tables: Map[String,DBTable]) = true
 
   def create(select: List[Expression], tables: Map[String,DBTable]):DBTable ={
     //TODO: finish me
+    DBTable("Finish me", None, Nil)
   }
 
   //TODO: sub-tables could be formed not in the database but from select statements on the database
@@ -61,25 +61,25 @@ class CoalesceSQL(source: Database){
   }*/
 
   def parseExpression(expr: Expression, tables: Map[String,DBTable]):List[DBColumn] = expr match{
-    case Aliased(expr, alias) =>
-    case Column(Some(Table(names, _)), name) =>
-    case Column(None, name) =>
-    case Wildcard(Some(table)) =>
+    case Aliased(expr, alias) => Nil
+    case Column(Some(Table(names, _)), name) => Nil
+    case Column(None, name) => Nil
+    case Wildcard(Some(table)) => Nil
     case Wildcard(None) => tables.values.flatMap(_.columns).toList
-    case Function(expr, name) =>
-    case Negate(expr) =>
-    case Add(expr1, expr2) =>
-    case Substract(expr1, expr2) =>
-    case Multiply(expr1, expr2) =>
-    case Divide(expr1, expr2) =>
+    case Function(expr, name) => Nil
+    case Negate(expr) => Nil
+    case Add(expr1, expr2) => Nil
+    case Substract(expr1, expr2) => Nil
+    case Multiply(expr1, expr2) => Nil
+    case Divide(expr1, expr2) => Nil
   }
 
   //TODO: ask Max how a table could have multiple names - Answer: foo.bar.yo.columnName
   @tailrec final def fromClause(from: List[Table], tables: List[DBTable]):List[DBTable] = from match{
-    case Table(names, Some(alias)) =>
-    case Table(names, None) =>
-    case Table(List(name), Some(alias)) =>
-    case Table(List(name), None) =>
+    case Table(List(name), Some(alias)) :: xs => Nil
+    case Table(List(name), None) :: xs => Nil
+    case Table(names, Some(alias)) :: xs => Nil
+    case Table(names, None) :: xs => Nil
     case _ :: xs => fromClause(xs, tables)
     case Nil => tables
   }
@@ -88,9 +88,9 @@ class CoalesceSQL(source: Database){
 object ValidateJoinClause{
   //Determines the nullability of columns
   protected[squealer] def joinClause(joins: List[Join]) = joins map{
-    case Join(joinKind, table, Some(Using(columns))) if columns.nonEmpty =>
-    case Join(joinKind, table, Some(On(condition))) =>
-    case Join(joinKind, table, None) => //TODO: ask Max what exactly this means - Natural Joins
+    case Join(joinKind, table, Some(Left(Using(columns)))) if columns.nonEmpty =>
+    case Join(joinKind, table, Some(Right(On(condition)))) =>
+    case Join(joinKind, table, None) => //TODO: Natural Joins
   }
 
   //This just nulls columns, does not actually validate the chosen columns
@@ -101,19 +101,19 @@ object ValidateJoinClause{
     case Inner | Equi | Cross | Natural => (left, right) //none changed
   }
 
-  @tailrec final protected[squealer] def parseCondition(condition: Condition, tables: List[DBTable]) = condition match{
-    case UnaryCondition(expr, IsNotNull) =>
-    case UnaryCondition(expr, IsNull) =>
-    case LogicalCondition(condition1, _, condition2) =>
-    case ComparisonCondition(expr1, Equals, expr2) =>
-    case ComparisonCondition(expr1, NotEquals, expr2) =>
-    case ComparisonCondition(expr1, GreaterThan, expr2) =>
-    case ComparisonCondition(expr1, GreaterThanOrEquals, expr2) =>
-    case ComparisonCondition(expr1, LessThan, expr2) =>
-    case ComparisonCondition(expr1, LessThanOrEquals, expr2) =>
-    case InCondition(expr, inOp, Left(select:SelectStatement)) =>
-    case InCondition(expr, inOp, Right(exprs)) if exprs.nonEmpty =>
-    case BetweenCondition(expr, betweenOp, fromExpr, toExpr) =>
-    case LikeCondition(expr, likeOp, pattern) =>
+  protected[squealer] def parseCondition(condition: Condition, tables: List[DBTable]) = condition match{
+    case UnaryCondition(expr, IsNotNull) => Nil
+    case UnaryCondition(expr, IsNull) =>    Nil
+    case LogicalCondition(condition1, _, condition2) => Nil
+    case ComparisonCondition(expr1, Equals, expr2) => Nil
+    case ComparisonCondition(expr1, NotEquals, expr2) => Nil
+    case ComparisonCondition(expr1, GreaterThan, expr2) => Nil
+    case ComparisonCondition(expr1, GreaterThanOrEquals, expr2) => Nil
+    case ComparisonCondition(expr1, LessThan, expr2) => Nil
+    case ComparisonCondition(expr1, LessThanOrEquals, expr2) => Nil
+    case InCondition(expr, inOp, Left(select:SelectStatement)) => Nil
+    case InCondition(expr, inOp, Right(exprs)) if exprs.nonEmpty => Nil
+    case BetweenCondition(expr, betweenOp, fromExpr, toExpr) => Nil
+    case LikeCondition(expr, likeOp, pattern) => Nil
   }
 }
