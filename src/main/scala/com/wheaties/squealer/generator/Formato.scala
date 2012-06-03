@@ -2,19 +2,6 @@ package com.wheaties.squealer.generator
 
 import com.wheaties.squealer.db._
 
-object ReformatColumn extends ((Column,String => String) => Column){
-  def apply(column: Column, format: String => String):Column={
-    val Column(name, typeOf, default, comment, colType) = column
-
-    new Column(format(name), typeOf, default, comment, colType){
-      override def size: Int = column.size
-      override def precision: Int = column.precision
-      override def scale: Int = column.scale
-      override def length: Int = column.length
-    }
-  }
-}
-
 /**
  * Formato: takes a table and gives you back a cleanly, squeaky table
  */
@@ -23,7 +10,7 @@ trait Formato extends (Table => Table){
   def apply(table: Table)={
     val Table(name, comment, columns) = table
 
-    Table(format(name).capitalize, comment, columns.map(ReformatColumn(_, format)))
+    Table(format(name).capitalize, comment, columns.map(ColumnNameLens.modify(_, format)))
   }
 
   protected[squealer] def format(name: String):String
