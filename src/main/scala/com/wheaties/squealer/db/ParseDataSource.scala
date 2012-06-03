@@ -71,7 +71,7 @@ object ParseDataSource extends ((String,String,String) => Database){
         case BIGINT => create("Long")
         case DOUBLE | FLOAT => create("Double")
         case INTEGER => create("Int")
-        case NUMERIC | DECIMAL if nullable && keys.contains(name) =>
+        case NUMERIC | DECIMAL =>
           new Column(name, "BigDecimal", default, comment, columnType) with WithScale{
             override val scale = columns.getInt("COLUMN_SIZE")
             override val precision = columns.getInt("DECIMAL_DIGITS")
@@ -79,11 +79,11 @@ object ParseDataSource extends ((String,String,String) => Database){
         case REAL => create("Float")
         case BIT => create("Boolean")
         case SMALLINT | TINYINT => create("Short")
-        case CHAR | LONGVARCHAR | VARCHAR | LONGNVARCHAR | NCHAR if nullable && keys.contains(name) =>
+        case CHAR | LONGVARCHAR | VARCHAR | LONGNVARCHAR | NCHAR =>
           new Column(name, "String", default, comment, columnType) with WithLength{
             override val length = columns.getInt("COLUMN_SIZE")
           }
-        case BINARY | VARBINARY | LONGVARBINARY if nullable && keys.contains(name) =>
+        case BINARY | VARBINARY | LONGVARBINARY =>
           new Column(name, "Array[Byte]", default, comment, columnType) with WithSize{
             override val size = columns.getInt("COLUMN_SIZE")
           }
