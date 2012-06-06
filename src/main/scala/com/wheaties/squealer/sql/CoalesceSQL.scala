@@ -6,6 +6,28 @@ import com.wheaties.squealer.db.{Table => DBTable}
 import annotation.tailrec
 import seekwell._
 
+/**
+ * TODO: Order of operations for a basic select clause (without "?")
+ *
+ * 1) Recursively crawl tree structure. Determine
+ *   a. columns used
+ *   b. tables used
+ * 2) Validate
+ *   a. joins
+ *   b. where
+ *   c. order by
+ *   d. group by
+ *   e. from
+ *   f. columns taken
+ * 3) Null columns based on joins
+ * 4) Remove primary keys for compound tables
+ * 5) produce the Table object
+ */
+
+/**
+ * Table => alias'd name, use Map[String,String]
+ */
+
 //TODO: first make SELECT * FROM tablename work!
 //TODO: Options can be handled with a decent forall
 class CoalesceSQL(source: Database){
@@ -72,6 +94,8 @@ class CoalesceSQL(source: Database){
     case Substract(expr1, expr2) => Nil
     case Multiply(expr1, expr2) => Nil
     case Divide(expr1, expr2) => Nil
+    case Subselect(select) => Nil
+    case BindParam(name, list) => Nil
   }
 
   //TODO: ask Max how a table could have multiple names - Answer: foo.bar.yo.columnName
@@ -84,6 +108,9 @@ class CoalesceSQL(source: Database){
     case Nil => tables
   }
 }
+
+case class LogicError(msg: String, expr: List[Expression]) extends Exception(msg)
+case class LogicWarning(msg: String, expr: List[Expression]) extends Exception(msg)
 
 object ValidateJoinClause{
   //Determines the nullability of columns
