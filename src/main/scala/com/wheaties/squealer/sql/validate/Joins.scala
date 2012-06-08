@@ -6,7 +6,6 @@ import com.wheaties.squealer.sql.{Result, Failure, Success}
 import com.wheaties.squealer.sql.LogicError
 import annotation.tailrec
 
-//These need to hold only the logic to validate, (not to parse the expression?)
 class ValidateJoin(leftTable: String, rightTable: String, columnName: String, join: Join)
     extends (List[Table] => Result[Exception,Join]){
 

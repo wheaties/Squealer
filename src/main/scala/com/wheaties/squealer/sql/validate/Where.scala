@@ -62,12 +62,14 @@ class ValidateComparisonCondition(condition: ComparisonCondition) extends (List[
     }
   }
 
-  //TODO: yeah, really need to have constants for the jdbc datatypes...
-  protected[squealer] def validateColType(column: DBColumn) = column.typeOf match{
-    case _ => Success("Finish me") //TODO: match on mathematical types
+  //TODO: equality checks can support any type, maths can't
+  protected[squealer] def validateColType(column: DBColumn) = if(column.typeOf.isNumeric){
+    Success(column)
+  }
+  else{
+    Failure(LogicError("Non-numerical column types are not supported in ".format(column.typeOf), condition.exprs))
   }
 
-  //TODO: perhaps can orElse some of these so that we can have a single expression parser
   protected[squealer] def parseExpression(expression: Expression, tables: List[DBTable]):Result[Exception,Expression] ={
     expression match{
       case Aliased(expr, alias) => Failure(LogicError("Aliasing is not supported on a comparison", condition.exprs))
@@ -103,8 +105,11 @@ class ValidateComparisonCondition(condition: ComparisonCondition) extends (List[
 class ValidateLikeCondition(condition: LikeCondition) extends (List[DBTable] => Result[Exception,Condition]){
   val LikeCondition(expr, _, _) = condition
 
-  protected[squealer] def validateColType(column: DBColumn) = column.typeOf match{
-    case _ => Success("Finish me") //TODO: match on string types
+  protected[squealer] def validateColType(column: DBColumn) = if(column.typeOf.isString){
+    Success(DBColumn)
+  }
+  else{
+    Failure(LogicError("Column types of %s can not be compared via Like expressions".format(column.typeOf), condition.exprs))
   }
 
   protected[squealer] def parseExpression(expression: Expression, tables: List[DBTable]):Result[Exception,Expression] ={
