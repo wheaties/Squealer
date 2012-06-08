@@ -15,7 +15,7 @@ class SquealerSpec extends Specification{
   val squeal = new Object with Squealer
 
   "generateTable" should{
-    val db = Database("foo", Table("foo", None, Column("bar", "Int", None, None, ColumnDef) :: Nil) :: Nil)
+    val db = Database("foo", Table("foo", None, Column("bar", IntType, None, None, ColumnDef) :: Nil) :: Nil)
 
     "produce a named table" in{
       val statement = TableStatement("com.wheaties", "foo")

@@ -8,7 +8,7 @@ import org.specs2.mutable._
 
 class PureTableSpec extends Specification{
   "PureTable with a primary key" should{
-    val tree = PureTable(Table("Foo", None, Column("a", "Int", None, None, PrimaryKey) :: Nil), "")
+    val tree = PureTable(Table("Foo", None, Column("a", IntType, None, None, PrimaryKey) :: Nil), "")
 
     "produce a case class" in{
       treeToString(tree) must contain("case class Foo(a: Int) {")
@@ -32,7 +32,7 @@ class PureTableSpec extends Specification{
   }
 
   "Pure table with more than 22 fields and no primary key" should{
-    val columns = for{indx <- 1 to 23} yield Column("a" + indx.toString, "Int", None, None, ColumnDef)
+    val columns = for{indx <- 1 to 23} yield Column("a" + indx.toString, IntType, None, None, ColumnDef)
     val tree = PureTable(Table("Foo", None, columns.toList), "")
 
     "produce a class" in{

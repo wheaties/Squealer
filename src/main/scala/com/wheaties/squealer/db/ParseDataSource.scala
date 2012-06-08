@@ -64,36 +64,35 @@ object ParseDataSource extends ((String,String,String) => Database){
         if(nullable) NullableColumn else ColumnDef
       }
 
-      def create(typeOf: String) = Column(name, typeOf, default, comment, columnType)
+      def create(typeOf: DataType) = Column(name, typeOf, default, comment, columnType)
 
-      //following Oracle mapping guide: http://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/getstart/mapping.html
       val column = columns.getInt("DATA_TYPE") match{
-        case BIGINT => create("Long")
-        case DOUBLE | FLOAT => create("Double")
-        case INTEGER => create("Int")
+        case BIGINT => create(LongType)
+        case DOUBLE | FLOAT => create(DoubleType)
+        case INTEGER => create(IntType)
         case NUMERIC | DECIMAL =>
-          new Column(name, "BigDecimal", default, comment, columnType) with WithScale{
+          new Column(name, DecimalType, default, comment, columnType) with WithScale{
             override val scale = columns.getInt("COLUMN_SIZE")
             override val precision = columns.getInt("DECIMAL_DIGITS")
           }
-        case REAL => create("Float")
-        case BIT => create("Boolean")
-        case SMALLINT | TINYINT => create("Short")
+        case REAL => create(FloatType)
+        case BIT => create(BooleanType)
+        case SMALLINT | TINYINT => create(ShortType)
         case CHAR | LONGVARCHAR | VARCHAR | LONGNVARCHAR | NCHAR =>
-          new Column(name, "String", default, comment, columnType) with WithLength{
+          new Column(name, StringType, default, comment, columnType) with WithLength{
             override val length = columns.getInt("COLUMN_SIZE")
           }
         case BINARY | VARBINARY | LONGVARBINARY =>
-          new Column(name, "Array[Byte]", default, comment, columnType) with WithSize{
+          new Column(name, BinaryType, default, comment, columnType) with WithSize{
             override val size = columns.getInt("COLUMN_SIZE")
           }
-        case DATE => create("Date")
-        case TIME => create("Time")
-        case TIMESTAMP => create("Timestamp")
-        case CLOB => create("Clob")
-        case BLOB => create("Blob")
-        case ARRAY => create("Array")
-        case _ => create("Object")
+        case DATE => create(DateType)
+        case TIME => create(TimeType)
+        case TIMESTAMP => create(TimestampType)
+        case CLOB => create(ClobType)
+        case BLOB => create(BlobType)
+        case ARRAY => create(ArrayType)
+        case _ => create(ObjectType)
       }
       columnBuilder += column
     }

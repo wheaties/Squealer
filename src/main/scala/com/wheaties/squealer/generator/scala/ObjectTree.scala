@@ -32,10 +32,10 @@ object ObjectTree extends ((String,List[Column]) => Tree){
   }
 
   //Don't hate me 'cause I'm using stringly types here
-  protected def function(name: String, typeOf: String) = if(typeOf == "Array[Byte]"){
+  protected def function(name: String, typeOf: DataType) = if(typeOf == BinaryType){
     REF("result") DOT("getBytes") APPLY REF(name)
   }
   else{
-    REF("result") DOT("get" + typeOf) APPLY REF(name)
+    REF("result") DOT("get" + typeOf.name) APPLY REF(name)
   }
 }

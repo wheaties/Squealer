@@ -23,7 +23,7 @@ class FormatoSpec extends Specification{
   }
 
   "camelCase (tables)" should{
-    def table(name: String, columnName: String = "yo") = Table(name, None, Column(columnName, "Int", None, None, ColumnDef) :: Nil)
+    def table(name: String, columnName: String = "yo") = Table(name, None, Column(columnName, IntType, None, None, ColumnDef) :: Nil)
 
     "handle snake case" in{
       CamelCase(table("my_name")).name must be_==("MyName")

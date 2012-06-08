@@ -33,19 +33,19 @@ object ConstructorTree extends ((String,List[Column]) => ClassDefStart){
   private def classStart(name: String, typeOf: Type):ValDef = VAL(name, typeOf)
   private def defaultStart(params: List[Column]) = if(params.size < 23) caseDefault _ else classDefault _
   private def caseDefault(name: String, typeOf: Type, default: String):ValDef = PARAM(name, typeOf) := LIT(default)
-  private def classDefault(name: String, typeOf: Type, default: String):ValDef = VAL(name, typeOf) := LIT(default)  
+  private def classDefault(name: String, typeOf: Type, default: String):ValDef = VAL(name, typeOf) := LIT(default)
 
   private[squealer] def make(params: List[Column]):List[ValDef] ={
     val start = paramStart(params)
     val withDefault = defaultStart(params)
     params.map{
       _ match{
-        case Column(name, typeOf, Some(default), _, ColumnDef) => withDefault(name, typeOf, default)
-        case Column(name, typeOf, _, _, ColumnDef) => start(name, typeOf)
-        case Column(name, typeOf, _, _, NullableColumn) => start(name, TYPE_OPTION(typeOf))
-        case Column(name, typeOf, _, _, NullablePrimaryKey) => start(name, TYPE_OPTION(typeOf))
-        case Column(name, typeOf, Some(default), _, PrimaryKey) => withDefault(name, typeOf, default)
-        case Column(name, typeOf, _, _, PrimaryKey) => start(name, typeOf)
+        case Column(name, typeOf, Some(default), _, ColumnDef) => withDefault(name, typeOf.name, default)
+        case Column(name, typeOf, _, _, ColumnDef) => start(name, typeOf.name)
+        case Column(name, typeOf, _, _, NullableColumn) => start(name, TYPE_OPTION(typeOf.name))
+        case Column(name, typeOf, _, _, NullablePrimaryKey) => start(name, TYPE_OPTION(typeOf.name))
+        case Column(name, typeOf, Some(default), _, PrimaryKey) => withDefault(name, typeOf.name, default)
+        case Column(name, typeOf, _, _, PrimaryKey) => start(name, typeOf.name)
       }
     }
   }
@@ -176,7 +176,7 @@ object EqualsTree extends ((String, List[Column]) => Tree){
 object CopyTree extends ((String,List[Column]) => Tree){
   def apply(name: String, params: List[Column]):Tree = if(params.length > 22){
     val args = params.map{ col =>
-      PARAM(col.name, col.typeOf) := THIS DOT col.name
+      PARAM(col.name, col.typeOf.name) := THIS DOT col.name
     }
 
     DEF("copy") withParams(args) := NEW(name, params.map(x => REF(x.name)): _*)

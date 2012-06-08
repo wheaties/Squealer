@@ -96,6 +96,8 @@ class CoalesceSQL(source: Database){
     case Divide(expr1, expr2) => Nil
     case Subselect(select) => Nil
     case BindParam(name, list) => Nil
+    case StringValue(v) => Nil         //TODO: add more data types, like double and such
+    case BigDecimalValue(v) => Nil
   }
 
   //TODO: ask Max how a table could have multiple names - Answer: foo.bar.yo.columnName
