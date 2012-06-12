@@ -5,7 +5,7 @@ import com.wheaties.squealer.sql._
 import annotation.tailrec
 import com.wheaties.squealer.db.{UnknownType, DataType, Column => DBColumn, Table => DBTable}
 
-//TODO: Refactor this code!
+//TODO: Forgot about constants!
 
 class ValidateUnaryCondition(condition: UnaryCondition) extends (List[DBTable] => Result[Exception,Condition]){
 
@@ -36,38 +36,38 @@ class ValidateComparisonCondition(condition: ComparisonCondition) extends (List[
   protected val ComparisonCondition(expr1, operator, expr2) = condition
   protected val validateCol = validateColumn(condition.exprs) _
 
-  //TODO: equality checks can support any type, maths can't
-  protected[squealer] def validateColType(column: DBColumn) = if(column.typeOf.isNumeric){
-    Success(column)
-  }
-  else{
-    Failure(LogicError("Non-numerical column types are not supported in ".format(column.typeOf), condition.exprs))
+  protected[squealer] def validateColType(column: DBColumn) = operator match{
+    case Equals | NotEquals => Success(column.typeOf)
+    case _ if column.typeOf.isNumeric => Success(column.typeOf)
+    case _ => Failure(LogicError("Non-numerical column types can't be compared".format(column.typeOf), condition.exprs))
   }
 
-  protected[squealer] def parseExpression(expression: Expression, tables: List[DBTable]):Result[Exception,Expression] ={
+  protected[squealer] def parseExpression(expression: Expression, tables: List[DBTable]):Result[Exception,DataType] ={
     expression match{
       case Aliased(expr, alias) => Failure(LogicError("Aliasing is not supported on a comparison", condition.exprs))
       case Column(table, columnName) =>
         for{
           resCol <- validateCol(columnName, table.map(_.name.mkString(".")), tables)
-          resExpr <- validateColType(resCol)
-        } yield expression
+          resType <- validateColType(resCol)
+        } yield resType
       case Wildcard(Some(table)) =>
         Failure(LogicError("%s.* is not an acceptable condition on a comparison".format(table.name.mkString(".")), condition.exprs))
       case Wildcard(None) => Failure(LogicError("* is not an acceptable condition on a comparison", condition.exprs))
       case Function(expr, name) => Failure(LogicError("%s can not be processed by Squealer".format(name), condition.exprs))
-      case Negate(expr) => for{ resExpr <- parseExpression(expr, tables) } yield expression
+      case Negate(expr) => for{
+        resType <- parseExpression(expr, tables)
+      } yield resType //TODO: Check if numeric
       case expr:BinaryAlgebraicExpression =>
         for{
-          resExpr1 <- parseExpression(expr.left, tables)
-          resExpr2 <- parseExpression(expr.right, tables)
-        } yield expression
-      case x:BindParam => Success(expression)
+          resType1 <- parseExpression(expr.left, tables)
+          resType2 <- parseExpression(expr.right, tables)
+        } yield resType1 //TODO: partial success right here if different data types
+      case x:BindParam => Success(UnknownType)
       case x:Subselect => Failure(LogicError("%s can not be processed by Squealer".format(x.toString()), condition.exprs))
     }
   }
 
-  //TODO: how am I do have Partial w/ warning about data conversions?
+  //TODO: get in the data type checks
   def apply(tables: List[DBTable]) = for{
     resExpr1 <- parseExpression(expr1, tables)
     resExpr2 <- parseExpression(expr2, tables)
@@ -109,7 +109,6 @@ class ValidateLikeCondition(condition: LikeCondition) extends (List[DBTable] => 
   def apply(tables: List[DBTable])= for{ resExpr <- parseExpression(expr, tables) } yield condition
 }
 
-//TODO: oh the D-R-Y violations...
 class ValidateInCondition(condition: InCondition) extends (List[DBTable] => Result[Exception,Condition]){
 
   protected val InCondition(expr, _, statements) = condition

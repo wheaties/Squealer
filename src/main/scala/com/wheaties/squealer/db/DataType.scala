@@ -45,4 +45,8 @@ case object ClobType extends DataType("Clob")
 case object BlobType extends DataType("Blob")
 case object ArrayType extends DataType("Array")
 case object ObjectType extends DataType("Object")
-case object UnknownType extends DataType("?")
+case object UnknownType extends DataType("?"){
+  override def isString = true
+  override def isNumeric = true
+  override def isDate = true
+}
