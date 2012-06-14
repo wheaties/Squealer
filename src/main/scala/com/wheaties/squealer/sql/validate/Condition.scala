@@ -3,10 +3,12 @@ package com.wheaties.squealer.sql.validate
 import seekwell._
 import com.wheaties.squealer.sql._
 import annotation.tailrec
-import com.wheaties.squealer.db.{UnknownType, DataType, Column => DBColumn, Table => DBTable}
+import com.wheaties.squealer.db.{StringType, UnknownType, DataType, Column => DBColumn, Table => DBTable}
 
 //TODO: Forgot about constants!
-
+//TODO: tables/columns can be aliased!
+//TODO: pull out parseExpression into a nice package partial function. Then just use what I need.
+//TODO: Perhaps think about passing in condition type name or some other abstract class.
 class ValidateUnaryCondition(condition: UnaryCondition) extends (List[DBTable] => Result[Exception,Condition]){
 
   protected val UnaryCondition(expr, _) = condition
@@ -30,7 +32,6 @@ class ValidateUnaryCondition(condition: UnaryCondition) extends (List[DBTable] =
   def apply(tables: List[DBTable])= for{ resExpr <- parseExpression(expr, tables) } yield condition
 }
 
-//TODO: tables/columns can be aliased!
 class ValidateComparisonCondition(condition: ComparisonCondition) extends (List[DBTable] => Result[Exception,Condition]){
 
   protected val ComparisonCondition(expr1, operator, expr2) = condition
@@ -64,18 +65,18 @@ class ValidateComparisonCondition(condition: ComparisonCondition) extends (List[
         } yield resType1 //TODO: partial success right here if different data types
       case x:BindParam => Success(UnknownType)
       case x:Subselect => Failure(LogicError("%s can not be processed by Squealer".format(x.toString()), condition.exprs))
+      case x:StringValue => Success(StringType)
     }
   }
 
   //TODO: get in the data type checks
   def apply(tables: List[DBTable]) = for{
-    resExpr1 <- parseExpression(expr1, tables)
-    resExpr2 <- parseExpression(expr2, tables)
+    resType1 <- parseExpression(expr1, tables)
+    resType2 <- parseExpression(expr2, tables)
   } yield condition
 }
 
 //TODO: add string/bigdecimal etc. column types to Max's Seekwell
-//TODO: conditions are expression1 types...
 class ValidateLikeCondition(condition: LikeCondition) extends (List[DBTable] => Result[Exception,Condition]){
 
   protected val LikeCondition(expr, _, _) = condition
@@ -103,6 +104,7 @@ class ValidateLikeCondition(condition: LikeCondition) extends (List[DBTable] => 
       case x:Negate => Failure(LogicError("Mathematical operators can not be used in like conditions", condition.exprs))
       case x:BinaryAlgebraicExpression => Failure(LogicError("Mathematical operators can not be used in like conditions", condition.exprs))
       case x:Subselect => Failure(LogicError("%s can not be processed by Squealer".format(x.toString()), condition.exprs))
+      case x:StringValue => Success(expression)
     }
   }
 
