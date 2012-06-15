@@ -7,8 +7,8 @@ import com.wheaties.squealer.db.{DataType, Table, Column => DBColumn}
 
 object `package` {
 
-  //TODO: pull tables variable into left portion
-   protected[squealer] def validateColumn(exprs: List[Expression])(columnName: String,
+
+  protected[squealer] def validateColumn(exprs: List[Expression])(columnName: String,
                                                                   tableName: Option[String],
                                                                   tables: List[Table]):Result[Exception,DBColumn] ={
     val columns = for{
@@ -25,8 +25,7 @@ object `package` {
 
   type ExpressionParser = PartialFunction[Expression, Result[Exception,DataType]]
 
-  //TODO: this is starting to look like abstract class territory
-  protected[squealer] def parseExpression(exprs: List[Expression], tables: List[Table], evalType: String):ExpressionParser={
+  protected[squealer] def failExpression(exprs: List[Expression], evalType: String):ExpressionParser={
     case x:Aliased => Failure(LogicError("Aliasing is not supported on %s".format(evalType), exprs))
     case x:Column => Failure(LogicError("Strings can not be used on %s".format(evalType), exprs))
     case Wildcard(Some(table)) => Failure(LogicError("%s.* is not an acceptable condition on %s".format(table.name.mkString("."), evalType), exprs))
