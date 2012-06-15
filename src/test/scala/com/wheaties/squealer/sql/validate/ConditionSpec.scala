@@ -12,44 +12,44 @@ class ValidateUnaryConditionSpec extends Specification{
     "fail an aliased expression" in{
       val expr = cond(Aliased(Column(None, "foo"), "bar"))
       val valid = new ValidateUnaryCondition(expr)(Nil)
-      valid must beAnInstanceOf[Failure[Exception,Condition]]
+      valid must beAnInstanceOf[Failure[Exception,DataType]]
     }
     "fail a wildcard" in{
       val expr = cond(Wildcard(None))
       val valid = new ValidateUnaryCondition(expr)(Nil)
-      valid must beAnInstanceOf[Failure[Exception,Condition]]
+      valid must beAnInstanceOf[Failure[Exception,DataType]]
     }
     "fail a function" in{
       val expr = cond(Function(Nil, "foo"))
       val valid = new ValidateUnaryCondition(expr)(Nil)
-      valid must beAnInstanceOf[Failure[Exception,Condition]]
+      valid must beAnInstanceOf[Failure[Exception,DataType]]
     }
     "fail a negate" in{
       val expr = cond(Negate(Column(None, "foo")))
       val valid = new ValidateUnaryCondition(expr)(Nil)
-      valid must beAnInstanceOf[Failure[Exception,Condition]]
+      valid must beAnInstanceOf[Failure[Exception,DataType]]
     }
     "fail a binary operation" in{
       val expr = cond(Add(Column(None, "foo"), Column(None, "foo")))
       val valid = new ValidateUnaryCondition(expr)(Nil)
-      valid must beAnInstanceOf[Failure[Exception,Condition]]
+      valid must beAnInstanceOf[Failure[Exception,DataType]]
     }
     "fail a bind param" in{
       val expr = cond(BindParam("foo", false))
       val valid = new ValidateUnaryCondition(expr)(Nil)
-      valid must beAnInstanceOf[Failure[Exception,Condition]]
+      valid must beAnInstanceOf[Failure[Exception,DataType]]
     }
     "fail a subselect" in{
       val expr = cond(Subselect(SelectStatement(true, Nil, Nil, Nil, None, None, Nil)))
       val valid = new ValidateUnaryCondition(expr)(Nil)
-      valid must beAnInstanceOf[Failure[Exception,Condition]]
+      valid must beAnInstanceOf[Failure[Exception,DataType]]
     }
     "fail a column that isn't in the tables list" in{
       val column = DBColumn("oh noes!", IntType, None, None, PrimaryKey)
       val tables = DBTable("foo", None, column :: Nil) :: Nil
       val expr = cond(Column(None, "bar"))
       val valid = new ValidateUnaryCondition(expr)(tables)
-      valid must beAnInstanceOf[Failure[Exception,Condition]]
+      valid must beAnInstanceOf[Failure[Exception,DataType]]
     }
     "pass a column that's in the tables list" in{
       val column = DBColumn("bar", IntType, None, None, PrimaryKey)

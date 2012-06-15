@@ -9,16 +9,17 @@ import com.wheaties.squealer.db.{StringType, UnknownType, DataType, Column => DB
 //TODO: tables/columns can be aliased!
 //TODO: pull out parseExpression into a nice package partial function. Then just use what I need.
 //TODO: Perhaps think about passing in condition type name or some other abstract class.
+//TODO: turn these into objects that return traits!
 class ValidateUnaryCondition(condition: UnaryCondition) extends (List[DBTable] => Result[Exception,Condition]){
 
   protected val UnaryCondition(expr, _) = condition
   protected val validateCol = validateColumn(condition.exprs) _
 
-  protected[squealer] def parseExpression(expression: Expression, tables: List[DBTable]):Result[Exception,Expression] ={
+  protected[squealer] def parseExpression(expression: Expression, tables: List[DBTable]):Result[Exception,DataType] ={
     expression match{
       case Aliased(expr1, alias) => Failure(LogicError("Aliasing is not supported on a comparison", condition.exprs))
       case Column(table, columnName) =>
-        for{ resCol <- validateCol(columnName, table.map(_.name.mkString(".")), tables) } yield expression
+        for{ resCol <- validateCol(columnName, table.map(_.name.mkString(".")), tables) } yield resCol.typeOf
       case Wildcard(Some(table)) => Failure(LogicError("%s.* is not an acceptable condition on a comparison".format(table.name.mkString(".")), condition.exprs))
       case Wildcard(None) => Failure(LogicError("* is not an acceptable condition on a comparison", condition.exprs))
       case Function(_, name) => Failure(LogicError("%s can not be processed by Squealer".format(name), condition.exprs))
@@ -29,7 +30,7 @@ class ValidateUnaryCondition(condition: UnaryCondition) extends (List[DBTable] =
     }
   }
 
-  def apply(tables: List[DBTable])= for{ resExpr <- parseExpression(expr, tables) } yield condition
+  def apply(tables: List[DBTable])= for{ resColType <- parseExpression(expr, tables) } yield condition
 }
 
 class ValidateComparisonCondition(condition: ComparisonCondition) extends (List[DBTable] => Result[Exception,Condition]){
@@ -89,22 +90,22 @@ class ValidateLikeCondition(condition: LikeCondition) extends (List[DBTable] => 
     Failure(LogicError("Column types of %s can not be compared via Like expressions".format(column.typeOf), condition.exprs))
   }
 
-  protected[squealer] def parseExpression(expression: Expression, tables: List[DBTable]):Result[Exception,Expression] ={
+  protected[squealer] def parseExpression(expression: Expression, tables: List[DBTable]):Result[Exception,DataType] ={
     expression match{
       case x:Aliased => Failure(LogicError("Aliasing is not supported on a comparison", condition.exprs))
       case Column(table, columnName) =>
         for{
           resCol <- validateCol(columnName, table.map(_.name.mkString(".")), tables)
           resExpr <- validateColType(resCol)
-        } yield expression
-      case x:BindParam => Success(expression)
+        } yield resCol.typeOf
+      case x:BindParam => Success(UnknownType)
       case Wildcard(Some(table)) => Failure(LogicError("%s.* is not an acceptable condition on a comparison".format(table.name.mkString(".")), condition.exprs))
       case Wildcard(None) => Failure(LogicError("* is not an acceptable condition on a comparison", condition.exprs))
       case Function(_, name) => Failure(LogicError("%s can not be processed by Squealer".format(name), condition.exprs))
       case x:Negate => Failure(LogicError("Mathematical operators can not be used in like conditions", condition.exprs))
       case x:BinaryAlgebraicExpression => Failure(LogicError("Mathematical operators can not be used in like conditions", condition.exprs))
       case x:Subselect => Failure(LogicError("%s can not be processed by Squealer".format(x.toString()), condition.exprs))
-      case x:StringValue => Success(expression)
+      case x:StringValue => Success(StringType)
     }
   }
 
