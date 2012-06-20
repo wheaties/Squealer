@@ -33,6 +33,7 @@ class ValidateUnaryCondition(condition: UnaryCondition) extends (List[DBTable] =
   def apply(tables: List[DBTable])= for{ resColType <- parseExpression(expr, tables) } yield condition
 }
 
+//TODO: forgot about a + b = -c
 class ValidateComparisonCondition(condition: ComparisonCondition) extends (List[DBTable] => Result[Exception,Condition]){
 
   protected val ComparisonCondition(expr1, operator, expr2) = condition
@@ -42,6 +43,13 @@ class ValidateComparisonCondition(condition: ComparisonCondition) extends (List[
     case Equals | NotEquals => Success(column.typeOf)
     case _ if column.typeOf.isNumeric => Success(column.typeOf)
     case _ => Failure(LogicError("Non-numerical column types can't be compared".format(column.typeOf), condition.exprs))
+  }
+
+  protected[squealer] def isNumeric(data: DataType):Result[Exception,DataType] = if(data.isNumeric){
+    Success(data)
+  }
+  else{
+    Failure(LogicError("Negation can only be used on numeric types", condition.exprs))
   }
 
   protected[squealer] def parseExpression(expression: Expression, tables: List[DBTable]):Result[Exception,DataType] ={
@@ -58,7 +66,8 @@ class ValidateComparisonCondition(condition: ComparisonCondition) extends (List[
       case Function(expr, name) => Failure(LogicError("%s can not be processed by Squealer".format(name), condition.exprs))
       case Negate(expr) => for{
         resType <- parseExpression(expr, tables)
-      } yield resType //TODO: Check if numeric
+        result <- isNumeric(resType)
+      } yield result
       case expr:BinaryAlgebraicExpression =>
         for{
           resType1 <- parseExpression(expr.left, tables)
