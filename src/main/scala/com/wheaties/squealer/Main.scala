@@ -4,16 +4,14 @@ import config._
 import db._
 import generator.{Formato, CamelCase}
 import generator.scala.PureTable
-import Implicits._
-import sql.CoalesceSQL
 
 object Main extends Squealer{
   def main(args: Array[String]){
     if(args.isEmpty){
-      action("statements.conf")
+      action("statements.conf", FileRecorder)
     }
     else{
-      args.foreach(action)
+      args.foreach(action(_, FileRecorder))
     }
   }
 }
@@ -26,7 +24,7 @@ object Main extends Squealer{
 
 trait Squealer{
 
-  def action(configName: String)(implicit recorder: Recorder[ParsedResult]) ={
+  def action(configName: String, recorder: Recorder[ParsedResult]) ={
     val DatabaseStatements(url, user, password, formato, statements) = ConfigParser(configName)
     val source = ParseDataSource(url, user, password)
     val results = statements flatMap{
@@ -46,7 +44,6 @@ trait Squealer{
 
   //TODO: finish me once we've got the SQL AST figured out
   def generateClass(statement: ClassStatement, dataSource: Database) ={
-    new CoalesceSQL(dataSource)(statement.statement)
     None
   }
 }

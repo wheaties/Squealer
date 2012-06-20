@@ -11,34 +11,31 @@ package squealer{
     def record(result: ParsedResult):Unit
   }
 
-  object Implicits{
+  object FileRecorder extends Recorder[ParsedResult]{
+    val basePath = "src" + File.pathSeparatorChar + "main" + File.pathSeparatorChar + "scala"
 
-    implicit object FileRecorder extends Recorder[ParsedResult]{
-      val basePath = "src" + File.pathSeparatorChar + "main" + File.pathSeparatorChar + "scala"
+    def record(result: ParsedResult){
+      val ParsedResult(classPackage, className, ast) = result
 
-      def record(result: ParsedResult){
-        val ParsedResult(classPackage, className, ast) = result
-
-        val path = basePath + File.pathSeparatorChar + classPackage.replace('.', File.pathSeparatorChar)
-        try{
-          val filePath = new File(path)
-          if(!filePath.exists()) filePath.mkdir()
-          val file = new File(path + File.pathSeparatorChar + className + ".scala")
-          write(file, ast)
-        }
-        catch{
-          case ex => println(ex.getMessage)
-        }
+      val path = basePath + File.pathSeparatorChar + classPackage.replace('.', File.pathSeparatorChar)
+      try{
+        val filePath = new File(path)
+        if(!filePath.exists()) filePath.mkdir()
+        val file = new File(path + File.pathSeparatorChar + className + ".scala")
+        write(file, ast)
       }
+      catch{
+        case ex => println(ex.getMessage)
+      }
+    }
 
-      def write(file: File, ast: Tree)={
-        val writer = new FileWriter(file)
-        try{
-          writer.write(treeToString(ast))
-        }
-        finally{
-          writer.close()
-        }
+    def write(file: File, ast: Tree)={
+      val writer = new FileWriter(file)
+      try{
+        writer.write(treeToString(ast))
+      }
+      finally{
+        writer.close()
       }
     }
   }
