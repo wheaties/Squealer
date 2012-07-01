@@ -1,6 +1,7 @@
 package com.wheaties.squealer.db
 
-trait Lens[A,B] extends Function2[A,B,A]{
+//TODO: Perhaps I need to move Lens and Result to a untils package
+trait Lens[A,B] extends ((A,B) => A){
   self =>
 
   protected def get(a: A):B
