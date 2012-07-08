@@ -1,10 +1,11 @@
-package com.wheaties.squealer.generator.scala
+package com.wheaties.squealer.generator.scala.jdbc
 
 import com.wheaties.squealer.db._
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
 import org.specs2.mutable._
+import com.wheaties.squealer.generator.scala.ScalaDocTree
 
 class ScalaDocTreeSpec extends Specification{
   val lit = LIT(0)

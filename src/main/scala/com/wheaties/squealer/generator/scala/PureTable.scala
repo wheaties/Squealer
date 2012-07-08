@@ -1,9 +1,11 @@
 package com.wheaties.squealer.generator.scala
 
 import com.wheaties.squealer.db._
+import com.wheaties.squealer.generator.scala.jdbc._
 import treehugger.forest._
 import treehuggerDSL._
 
+//TODO: move this to jdbc package
 object PureTable extends ((Table, String, Table => Table) => Tree){
   def apply(table: Table, pack: String, formatter : (Table => Table) = identity):Tree = if(pack.isEmpty){
     BLOCK{ block(formatter(table)) } withoutPackage
@@ -17,18 +19,6 @@ object PureTable extends ((Table, String, Table => Table) => Tree){
     ObjectTree(table.name, table.columns) ::
     ToTree(table.name, table.columns) :: Nil
   }
-}
-
-//TODO: move me to where we do the SQL AST parsing and matching against database
-case class Clazz(classPackage: String, name: String, sql: String, columns: List[Column])
-
-//TODO: have to include the statement creators here to map the SQL to code
-object ImpureTable extends (Clazz => Tree){
-  def apply(clazz: Clazz) = BLOCK{
-    IMPORT("java.sql._") ::
-    ObjectTree(clazz.name, clazz.columns) ::
-    ToTree(clazz.name, clazz.columns) :: Nil
-  } inPackage(clazz.classPackage)
 }
 
 object ToTree extends ((String, List[Column]) => Tree){

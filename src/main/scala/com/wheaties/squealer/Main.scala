@@ -8,7 +8,7 @@ import generator.scala.PureTable
 object Main extends Squealer{
   def main(args: Array[String]){
     if(args.isEmpty){
-      action("statements.conf", FileRecorder)
+      action("squealer.conf", FileRecorder)
     }
     else{
       args.foreach(action(_, FileRecorder))
@@ -30,7 +30,6 @@ trait Squealer{
     val results = statements flatMap{
       _ match{
         case x:TableStatement => generateTable(x, source, formato)
-        case x:ClassStatement => generateClass(x, source)
       }
     }
 
@@ -40,10 +39,5 @@ trait Squealer{
   def generateTable(statement: TableStatement, dataSource: Database, formato: Formato = CamelCase) ={
     val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield PureTable(table, statement.pack, formato)
     tree.map(ParsedResult(statement.pack, statement.name, _))
-  }
-
-  //TODO: finish me once we've got the SQL AST figured out
-  def generateClass(statement: ClassStatement, dataSource: Database) ={
-    None
   }
 }

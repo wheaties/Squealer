@@ -1,4 +1,4 @@
-package com.wheaties.squealer.generator.scala
+package com.wheaties.squealer.generator.scala.jdbc
 
 import com.wheaties.squealer.db._
 import treehugger.forest._

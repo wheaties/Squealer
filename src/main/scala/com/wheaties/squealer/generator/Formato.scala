@@ -2,9 +2,12 @@ package com.wheaties.squealer.generator
 
 import com.wheaties.squealer.db._
 
-/**
- * Formato: takes a table and gives you back a cleanly, squeaky table
- */
+//trait Formato[Obj] extends (Obj => Obj){
+//  def apply(obj: Obj):Obj
+//
+//  def format(in: String): String
+//}
+
 trait Formato extends (Table => Table){
 
   def apply(table: Table)={
