@@ -5,25 +5,6 @@ import treehugger.forest._
 import definitions._
 import treehuggerDSL._
 import org.specs2.mutable._
-import com.wheaties.squealer.generator.scala.ScalaDocTree
-
-class ScalaDocTreeSpec extends Specification{
-  val lit = LIT(0)
-
-  "extractComment" should{
-    "handle commented columns" in{
-      val output = ScalaDocTree.extractComment(Column("foo", IntType, None, Some("bar"), ColumnDef))
-      output.exists(_ == "@foo bar") must beTrue
-    }
-  }
-
-  "ScalaDocTree" should{
-    "place comments before a tree" in{
-      val output = ScalaDocTree("Foo", Column("a", IntType, None, Some("yo"), ColumnDef) :: Nil)(lit)
-      treeToString(output) must contain("// @a yo\n0")
-    }
-  }
-}
 
 class ConstructorTreeSpec extends Specification{
 

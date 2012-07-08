@@ -1,6 +1,6 @@
 package com.wheaties.squealer.db
 
-//TODO: factor out these Scala specific data type mappings. This a first step to that end.
+//TODO: factor out these Scala specific data type mappings. This a first step.
 //following Oracle mapping guide: http://docs.oracle.com/javase/1.5.0/docs/guide/jdbc/getstart/mapping.html
 abstract class DataType(scalaName: String){
   def isNumeric = false

@@ -2,8 +2,8 @@ package com.wheaties.squealer
 
 import config._
 import db._
+import generator.scala.jdbc.JDBCTree
 import generator.{Formato, CamelCase}
-import generator.scala.PureTable
 
 object Main extends Squealer{
   def main(args: Array[String]){
@@ -37,7 +37,7 @@ trait Squealer{
   }
 
   def generateTable(statement: TableStatement, dataSource: Database, formato: Formato = CamelCase) ={
-    val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield PureTable(table, statement.pack, formato)
+    val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield JDBCTree(table, statement.pack, formato)
     tree.map(ParsedResult(statement.pack, statement.name, _))
   }
 }

@@ -2,12 +2,7 @@ package com.wheaties.squealer.generator
 
 import com.wheaties.squealer.db._
 
-//trait Formato[Obj] extends (Obj => Obj){
-//  def apply(obj: Obj):Obj
-//
-//  def format(in: String): String
-//}
-
+//TODO: this may need to disapear in Table => Table form.
 trait Formato extends (Table => Table){
 
   def apply(table: Table)={
