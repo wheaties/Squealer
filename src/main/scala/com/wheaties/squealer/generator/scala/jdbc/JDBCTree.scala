@@ -2,10 +2,10 @@ package com.wheaties.squealer.generator.scala.jdbc
 
 import com.wheaties.squealer.db.{Column, Table}
 import com.wheaties.squealer.generator.scala.ScalaDocs
+import com.wheaties.squealer.generator.Formato
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
-import com.wheaties.squealer.generator.Formato
 
 //TODO: revisit signature
 object JDBCTree extends ((Table,String,Formato) => Tree) {
@@ -13,7 +13,8 @@ object JDBCTree extends ((Table,String,Formato) => Tree) {
     val formattedTable = formatter(table)
     val comments = ScalaDocs(table, formatter.format)
     val clazz = makeClass(formattedTable.name, formattedTable.columns, comments)
-    val block = IMPORT("java.sql._") :: clazz :: ObjectTree(table.name, table.columns) :: Nil
+    val objekt = ObjectTree(table.name, table.columns)
+    val block = IMPORT("java.sql._") :: clazz :: objekt :: Nil
 
     if(pack.isEmpty){
       BLOCK{ block } withoutPackage

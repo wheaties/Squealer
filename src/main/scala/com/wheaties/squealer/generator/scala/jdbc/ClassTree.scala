@@ -24,12 +24,9 @@ object ConstructorTree extends ((String,List[Column]) => ClassDefStart){
     val withDefault = defaultStart(params)
     params.map{
       _ match{
-        case Column(name, typeOf, Some(default), _, ColumnDef) => withDefault(name, typeOf.name, default)
-        case Column(name, typeOf, _, _, ColumnDef) => start(name, typeOf.name)
-        case Column(name, typeOf, _, _, NullableColumn) => start(name, TYPE_OPTION(typeOf.name))
-        case Column(name, typeOf, _, _, NullablePrimaryKey) => start(name, TYPE_OPTION(typeOf.name))
-        case Column(name, typeOf, Some(default), _, PrimaryKey) => withDefault(name, typeOf.name, default)
-        case Column(name, typeOf, _, _, PrimaryKey) => start(name, typeOf.name)
+        case Column(name, typeOf, Some(default), _, ColumnDef | PrimaryKey) => withDefault(name, typeOf.name, default)
+        case Column(name, typeOf, _, _, ColumnDef | PrimaryKey) => start(name, typeOf.name)
+        case Column(name, typeOf, _, _, NullableColumn | NullablePrimaryKey) => start(name, TYPE_OPTION(typeOf.name))
       }
     }
   }

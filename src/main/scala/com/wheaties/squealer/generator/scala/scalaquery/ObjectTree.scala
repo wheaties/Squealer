@@ -1,9 +1,5 @@
 package com.wheaties.squealer.generator.scala.scalaquery
 
-//import org.scalaquery.ql.basic.BasicTable
-//import org.scalaquery.ql.TypeMapper._
-//import org.scalaquery.ql._
-
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
