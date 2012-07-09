@@ -5,8 +5,7 @@ import treehugger.forest._
 import definitions._
 import treehuggerDSL._
 
-//TODO: normal plus keyed entity
-class ConstructorTree{
+object ConstructorTree extends ((String,List[Column],String => String) => Tree){
   def apply(name: String, columns: List[Column], formato: String => String) ={
     val argList = args(columns, formato)
     val constructor = if(columns.size < 23){
@@ -38,10 +37,10 @@ class ConstructorTree{
 
   private[squeryl] def default(params: List[Column], formato: String => String) ={
     def caseDefault(name: String, typeOf: Type, default: String):ValDef ={
-      PARAM(formato(name), typeOf) := LIT(default) withAnnots(columnAnnot(name))
+      PARAM(formato(name), typeOf) withAnnots(columnAnnot(name)) := REF(default)
     }
     def classDefault(name: String, typeOf: Type, default: String):ValDef ={
-      VAL(formato(name), typeOf) := LIT(default) withAnnots(columnAnnot(name))
+      VAL(formato(name), typeOf) withAnnots(columnAnnot(name)) := REF(default)
     }
 
     if(params.size < 23) caseDefault _ else classDefault _
@@ -69,12 +68,22 @@ class ConstructorTree{
     }
 
     val keyed = RootClass.newClass("KeyedEntity")
-    if(types.size > 1){
-      keyed TYPE_OF(types)
-    }
-    else{
-      val composite = RootClass.newTypeParameter("CompositeKey%s".format(types.size)) TYPE_OF(types)
-      keyed TYPE_OF(composite)
+    types match{
+      case List(item) => keyed TYPE_OF(item)
+      case _ =>
+        val composite = RootClass.newTypeParameter("CompositeKey%s".format(types.size)) TYPE_OF(types)
+        keyed TYPE_OF(composite)
     }
   }
 }
+
+/*object DefinitionsTree{
+  def optionConstructor(columns: List[Column], formato: String => String) ={
+
+    DEF("this") :=
+  }
+
+  def id(columns: List[Column], formato: String => String) ={
+
+  }
+}*/
