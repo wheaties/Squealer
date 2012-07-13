@@ -23,19 +23,18 @@ object ObjectTree extends ((String,List[Column],String => String) => Tree){
     OBJECTDEF(name) withParents(parent APPLY LIT(formato(name)))
   }
 
-  //TODO: totally breaking type safety here 'cause I don't know how to get what I want.
   protected[scalaquery] def member(column: Column, formato: String => String)={
     val args = column match{
       case Column(_, _, Some(default), _, NullableColumn | NullablePrimaryKey) =>
-        val defaultDef = REF("0 Default Some(%s)".format(default))//LIT(0) REF("Default") SOME(REF(default))
+        val defaultDef = LIT(0) INFIX("Default") APPLY(SOME(REF(default)))
         defaultDef :: Nil
       case Column(_, _, Some(default), _, _) =>
-        val notNull = REF("0 NotNull")//LIT(0) REF("NotNull")
-        val defaultDef = REF("0 Default %s".format(default))//LIT(0)  REF("Default") REF(default)
+        val notNull = LIT(0) POSTFIX("NotNull")
+        val defaultDef = LIT(0) INFIX("Default") APPLY(REF(default))
         notNull :: defaultDef :: Nil
       case Column(_, _, _, _, NullableColumn | NullablePrimaryKey) => Nil
       case _ =>
-        val notNull = REF("0 NotNull")//LIT(0) REF("NotNull")
+        val notNull = LIT(0) POSTFIX("NotNull")
         notNull :: Nil
     }
 
@@ -43,8 +42,12 @@ object ObjectTree extends ((String,List[Column],String => String) => Tree){
   }
 
   protected[scalaquery] def projection(columns: List[Column]) ={
-    val refs = columns.map(col => REF(col.name))
-    DEF("*") := refs.reduceLeft{ application }
+    val tilde = columns.map(_.name) match{
+      case List(single) => REF(single)
+      case multi => multi.map(REF(_)).reduce( application )
+    }
+
+    DEF("*") := tilde
   }
-  protected[scalaquery] def application(x: Tree, y: Ident):Tree = (y DOT "~") APPLY x
+  protected[scalaquery] def application(x: Tree, y: Tree):Tree = y INFIX("~") APPLY x
 }

@@ -29,7 +29,7 @@ class ObjectTreeSpec extends Specification{
 
     "handle multiple columns" in{
       val tree = ObjectTree.projection(column :: column :: column :: Nil)
-      treeToString(tree) must be_==("def * = bar.~(bar.~(bar))")
+      treeToString(tree) must be_==("def * = bar ~ (bar ~ bar)")
     }
   }
 
@@ -60,7 +60,7 @@ class ObjectTreeSpec extends Specification{
     }
     "produce a table with multiple columns" in{
       val tree = ObjectTree("Foo", column :: column :: column :: Nil, identity)
-      treeToString(tree) must be_==("object Foo extends BasicTable[(Int, Int, Int)](\"Foo\") {\n  def * = bar.~(bar.~(bar))\n  def bar = column[Int](\"bar\", 0 NotNull)\n  def bar = column[Int](\"bar\", 0 NotNull)\n  def bar = column[Int](\"bar\", 0 NotNull)\n}")
+      treeToString(tree) must be_==("object Foo extends BasicTable[(Int, Int, Int)](\"Foo\") {\n  def * = bar ~ (bar ~ bar)\n  def bar = column[Int](\"bar\", 0 NotNull)\n  def bar = column[Int](\"bar\", 0 NotNull)\n  def bar = column[Int](\"bar\", 0 NotNull)\n}")
     }
   }
 }

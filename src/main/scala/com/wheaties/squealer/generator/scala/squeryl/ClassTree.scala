@@ -77,13 +77,39 @@ object ConstructorTree extends ((String,List[Column],String => String) => Tree){
   }
 }
 
-/*object DefinitionsTree{
+object DefinitionsTree{
   def optionConstructor(columns: List[Column], formato: String => String) ={
+    val args = columns map{
+      _ match{
+        case Column(_, _, Some(default), _, _) => REF(default)
+        case Column(_, typeOf, _, _, _) => defaultArg(typeOf)
+      }
+    }
+    DEF("this") := THIS APPLY(args)
+  }
 
-    DEF("this") :=
+  //TODO: check mapping against Squeryl
+  def defaultArg(typeOf: DataType) = typeOf match{
+    case ArrayType => REF("null") //I have no other way :(
+    case BinaryType => TYPE_ARRAY("Byte") APPLY(REF("empty"))
+    case BlobType =>
+      val array = TYPE_ARRAY("Byte") APPLY(REF("empty"))
+      NEW("SerialBlob", array)
+    case BooleanType => FALSE
+    case ClobType =>
+      val array = TYPE_ARRAY("Char") APPLY(REF("empty"))
+      NEW("SerialClob", array)
+    case DateType => NEW("Date", LIT(0))
+    case DecimalType | DoubleType | FloatType => LIT(0.0)
+    case IntType | ShortType => LIT(0)
+    case LongType => LIT(0L)
+    case ObjectType | UnknownType => NEW("Any")
+    case StringType => LIT("")
+    case TimestampType => NEW("Timestamp", LIT(0))
+    case TimeType => NEW("Time", LIT(0))
   }
 
   def id(columns: List[Column], formato: String => String) ={
 
   }
-}*/
+}
