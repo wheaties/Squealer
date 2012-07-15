@@ -7,7 +7,7 @@ import definitions._
 import treehuggerDSL._
 import com.wheaties.squealer.generator.scala.ScalaDocs
 
-class ScalaQueryTree {
+class ScalaQueryTree extends ((Table,String,Formato) => Tree){
   def apply(table: Table, pack: String, formato: Formato):Tree ={
     val imports = IMPORT("java.sql._") ::
       IMPORT("org.scalaquery.ql.basic.BasicTable") ::

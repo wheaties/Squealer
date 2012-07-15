@@ -25,17 +25,17 @@ class ConstructorTreeSpec extends Specification{
     "create default values" in{
       val columns = Column("bar", IntType, Some("1"), None, ColumnDef) :: Nil
       val tree = ConstructorTree("Foo", columns, identity)
-      treeToString(tree) must be_==("case class Foo(@Column(\"bar\") bar: Int = 1)")
+      treeToString(tree.tree) must be_==("case class Foo(@Column(\"bar\") bar: Int = 1)")
     }
     "handle nullable types" in{
       val columns = Column("bar", IntType, None, None, NullableColumn) :: Nil
       val tree = ConstructorTree("Foo", columns, identity)
-      treeToString(tree) must be_==("case class Foo(@Column(\"bar\") bar: Option[Int])")
+      treeToString(tree.tree) must be_==("case class Foo(@Column(\"bar\") bar: Option[Int])")
     }
     "make a class constructor for more than 22 columns" in{
       val columns = for{indx <- 0 to 22} yield Column("bar" + indx.toString, IntType, None, None, ColumnDef)
       val tree = ConstructorTree("Foo", columns.toList, identity)
-      treeToString(tree) must be_==("class Foo(val @Column(\"bar0\") bar0: Int, val @Column(\"bar1\") bar1: Int, " +
+      treeToString(tree.tree) must be_==("class Foo(val @Column(\"bar0\") bar0: Int, val @Column(\"bar1\") bar1: Int, " +
         "val @Column(\"bar2\") bar2: Int, val @Column(\"bar3\") bar3: Int, val @Column(\"bar4\") bar4: Int, val @Column(\"bar5\") bar5: Int, " +
         "val @Column(\"bar6\") bar6: Int, val @Column(\"bar7\") bar7: Int, val @Column(\"bar8\") bar8: Int, val @Column(\"bar9\") bar9: Int, " +
         "val @Column(\"bar10\") bar10: Int, val @Column(\"bar11\") bar11: Int, val @Column(\"bar12\") bar12: Int, val @Column(\"bar13\") bar13: Int, " +

@@ -5,14 +5,7 @@ import treehugger.forest._
 import definitions._
 import treehuggerDSL._
 
-//TODO: don't forget javax.sql.rowset.serial.SerialClob and javax.sql.rowset.serial.SerialBlob includes
-/*
-import org.squeryl.PrimitiveTypeMode._
-import org.squery.Schema
-import org.squeryl.annotations.Column
- */
-
-object ConstructorTree extends ((String,List[Column],String => String) => Tree){
+object ConstructorTree extends ((String,List[Column],String => String) => ClassDefStart){
   def apply(name: String, columns: List[Column], formato: String => String) ={
     val argList = args(columns, formato)
     val constructor = if(columns.size < 23){
