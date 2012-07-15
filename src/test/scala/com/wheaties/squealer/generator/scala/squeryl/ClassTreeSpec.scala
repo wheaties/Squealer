@@ -45,3 +45,70 @@ class ConstructorTreeSpec extends Specification{
     }
   }
 }
+
+class DefinitionTreeSpec extends Specification{
+  "id" should{
+    "handle nullable primary keys" in{
+      val columns = Column("bar", IntType, None, None, NullablePrimaryKey) :: Nil
+      val tree = DefinitionsTree.id(columns, identity)
+      treeToString(tree) must be_==("def id = compositeKey(bar)")
+    }
+    "handle primary keys" in{
+      val columns = Column("bar", IntType, None, None, PrimaryKey) :: Nil
+      val tree = DefinitionsTree.id(columns, identity)
+      treeToString(tree) must be_==("def id = compositeKey(bar)")
+    }
+    "handle multiple keys" in{
+      val columns = Column("foo", IntType, None, None, NullablePrimaryKey) ::
+        Column("bar", IntType, None, None, PrimaryKey) ::
+        Column("baz", IntType, None, None, PrimaryKey) :: Nil
+      val tree = DefinitionsTree.id(columns, identity)
+      treeToString(tree) must be_==("def id = compositeKey(foo, bar, baz)")
+    }
+  }
+
+  "optionConstruction" should{
+    "handle nullable fields with a default" in{
+      val columns = Column("foo", IntType, Some("1"), None, NullablePrimaryKey) :: Nil
+      val tree = DefinitionsTree.optionConstructor(columns)
+      treeToString(tree) must be_==("def this() = this(Some(1))")
+    }
+    "handle non-nullable fields with a default" in{
+      val columns = Column("foo", IntType, Some("1"), None, ColumnDef) :: Nil
+      val tree = DefinitionsTree.optionConstructor(columns)
+      treeToString(tree) must be_==("def this() = this(1)")
+    }
+    "handle nullable fields without a default" in{
+      val columns = Column("foo", IntType, None, None, NullableColumn) :: Nil
+      val tree = DefinitionsTree.optionConstructor(columns)
+      treeToString(tree) must be_==("def this() = this(Some(0))")
+    }
+    "handle nullable fields without a default" in{
+      val columns = Column("foo", IntType, None, None, ColumnDef) :: Nil
+      val tree = DefinitionsTree.optionConstructor(columns)
+      treeToString(tree) must be_==("def this() = this(0)")
+    }
+    "multiple fields" in{
+      val columns = Column("foo", IntType, Some("1"), None, ColumnDef) ::
+        Column("bar", IntType, None, None, ColumnDef) ::
+        Column("baz", IntType, None, None, NullableColumn) :: Nil
+      val tree = DefinitionsTree.optionConstructor(columns)
+      treeToString(tree) must be_==("def this() = this(1, 0, Some(0)")
+    }
+  }
+
+  "defaultArg" should{
+    "do byte arrays" in{
+      val tree = DefinitionsTree.defaultArg(BinaryType)
+      treeToString(tree) must be_==("new Array[Byte]")
+    }
+    "do Blob" in{
+      val tree = DefinitionsTree.defaultArg(BlobType)
+      treeToString(tree) must be_==("new SerialBlob(new Array[Byte])")
+    }
+    "do Clob" in{
+      val tree = DefinitionsTree.defaultArg(ClobType)
+      treeToString(tree) must be_==("new SerialClob(new Array[Char])")
+    }
+  }
+}
