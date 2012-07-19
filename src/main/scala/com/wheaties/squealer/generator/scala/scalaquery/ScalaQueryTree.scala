@@ -13,8 +13,8 @@ class ScalaQueryTree extends ((Table,String,Formato) => Tree){
       IMPORT("org.scalaquery.ql.basic.BasicTable") ::
       IMPORT("org.scalaquery.ql.TypeMapper._") ::
       IMPORT("org.scalaquery.ql._") :: Nil
-    val comments = ScalaDocs(table, formato.format)
-    val objekt = ObjectTree(table.name, table.columns, formato.format) withComments(comments)
+    val comments = ScalaDocs(table, formato)
+    val objekt = ObjectTree(table.name, table.columns, formato) withComments(comments)
     val block =  imports ::: objekt :: Nil
 
     if(pack.isEmpty){

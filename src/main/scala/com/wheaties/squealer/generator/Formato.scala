@@ -1,20 +1,15 @@
 package com.wheaties.squealer.generator
 
-import com.wheaties.squealer.db._
-
-//TODO: this may need to disapear in Table => Table form.
-trait Formato extends (Table => Table){
-
-  def apply(table: Table)={
-    val Table(name, comment, columns) = table
-
-    Table(format(name).capitalize, comment, columns.map(ColumnNameLens.modify(_, format)))
-  }
-
-  protected[squealer] def format(name: String):String
+trait Formato{
+  def tableName(name: String):String
+  def columnName(name: String):String
 }
 
 object CamelCase extends Formato{
+
+  def tableName(name: String) = format(name).capitalize
+  def columnName(name: String) = format(name)
+
   /**
    *  Change "HelloWorld" to "helloWorld"
    *  Change "Hello_World" to "helloWorld"
@@ -26,9 +21,14 @@ object CamelCase extends Formato{
   }
 }
 
+object SnakeCase extends Formato{
+  def tableName(name: String) = name.split("\\s").map(_.capitalize).foldLeft("")(_ + _)
+  def columnName(name: String) = name.split("\\s").map(_.toLowerCase).foldLeft("")(_ + "_" + _)
+}
+
 class RegexFormato(regex: String, replaceWith: String) extends Formato{
-  protected[squealer] def format(in: String): String ={
-    val word = in.replaceAll(regex, replaceWith)
-    word.charAt(0).toLower + word.drop(1)
-  }
+  def tableName(name: String) = format(name).capitalize
+  def columnName(name: String) = format(name)
+
+  protected[squealer] def format(in: String): String = in.replaceAll(regex, replaceWith)
 }

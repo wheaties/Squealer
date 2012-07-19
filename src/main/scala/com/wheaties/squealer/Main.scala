@@ -3,7 +3,6 @@ package com.wheaties.squealer
 import config._
 import db._
 import generator.scala.jdbc.JDBCTree
-import generator.{Formato, CamelCase}
 
 object Main extends Squealer{
   def main(args: Array[String]){
@@ -25,19 +24,16 @@ object Main extends Squealer{
 trait Squealer{
 
   def action(configName: String, recorder: Recorder[ParsedResult]) ={
-    val DatabaseStatements(url, user, password, formato, statements) = ConfigParser(configName)
-    val source = ParseDataSource(url, user, password)
-    val results = statements flatMap{
-      _ match{
-        case x:TableStatement => generateTable(x, source, formato)
-      }
-    }
+    val ConfigParams(tables, db, format) = ConfigParser(configName)
 
-    results.map(recorder.record)
+    val source = ParseDataSource(db.url, db.user, db.password)
+    //val results = tables flatMap{ generateTable(_, source, format) }
+
+    //results.map(recorder.record)
   }
 
-  def generateTable(statement: TableStatement, dataSource: Database, formato: Formato = CamelCase) ={
-    val tree = for(table <- dataSource.tables.find(_.name == statement.name)) yield JDBCTree(table, statement.pack, formato)
-    tree.map(ParsedResult(statement.pack, statement.name, _))
-  }
+  /*def generateTable(table: TableParams, dataSource: Database, format: FormatParams) ={
+    val tree = for(dbTable <- dataSource.tables.find(_.name == table.name)) yield JDBCTree(dbTable, table.pack, format)
+    tree.map(ParsedResult(table.pack, table.name, _))
+  }*/
 }

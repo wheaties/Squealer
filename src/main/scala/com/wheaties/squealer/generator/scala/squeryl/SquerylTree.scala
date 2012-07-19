@@ -16,8 +16,8 @@ object SquerylTree extends ((Table,String,Formato) => Tree){
       IMPORT("org.squeryl.PrimitiveTypeMode._") ::
       IMPORT("org.squery.Schema") ::
       IMPORT("org.squeryl.annotations.Column") :: Nil
-    val comments = ScalaDocs(table, formato.format)
-    val clazz = makeClass(table.name, table.columns, comments, formato.format)
+    val comments = ScalaDocs(table, formato)
+    val clazz = makeClass(table.name, table.columns, comments, formato)
     val block = imports ::: clazz :: Nil
 
     if(pack.isEmpty){
@@ -28,9 +28,9 @@ object SquerylTree extends ((Table,String,Formato) => Tree){
     }
   }
 
-  private[squeryl] def makeClass(name: String, columns: List[Column], comments: List[String], formato: String => String):ClassDef ={
+  private[squeryl] def makeClass(name: String, columns: List[Column], comments: List[String], formato: Formato):ClassDef ={
     ConstructorTree(name, columns, formato) := BLOCK{
-      DefinitionsTree(columns, formato)
+      DefinitionsTree(columns)
     } withComments(comments)
   }
 }

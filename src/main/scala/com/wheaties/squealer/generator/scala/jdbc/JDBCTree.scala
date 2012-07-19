@@ -1,18 +1,18 @@
 package com.wheaties.squealer.generator.scala.jdbc
 
-import com.wheaties.squealer.db.{Column, Table}
 import com.wheaties.squealer.generator.scala.ScalaDocs
 import com.wheaties.squealer.generator.Formato
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
+import com.wheaties.squealer.db.{ColumnNameLens, Column, Table}
 
 //TODO: revisit signature
 object JDBCTree extends ((Table,String,Formato) => Tree) {
-  def apply(table: Table, pack: String, formatter: Formato):Tree ={
-    val formattedTable = formatter(table)
-    val comments = ScalaDocs(table, formatter.format)
-    val clazz = makeClass(formattedTable.name, formattedTable.columns, comments)
+  def apply(table: Table, pack: String, formato: Formato):Tree ={
+    val comments = ScalaDocs(table, formato)
+    val columns = table.columns.map(ColumnNameLens.modify(_, formato.columnName))
+    val clazz = makeClass(formato.tableName(table.name), columns, comments)
     val objekt = ObjectTree(table.name, table.columns)
     val block = IMPORT("java.sql._") :: clazz :: objekt :: Nil
 

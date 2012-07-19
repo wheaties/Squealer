@@ -4,26 +4,27 @@ import treehugger.forest._
 import definitions._
 import treehuggerDSL._
 import com.wheaties.squealer.db.{NullablePrimaryKey, NullableColumn, Column}
+import com.wheaties.squealer.generator.Formato
 
 /**
  * Creates a ScalaQuery object representing a table in the database.
  */
-object ObjectTree extends ((String,List[Column],String => String) => Tree){
+object ObjectTree extends ((String,List[Column],Formato) => Tree){
 
-  def apply(name: String, columns: List[Column], formato: String => String)={
+  def apply(name: String, columns: List[Column], formato: Formato)={
     declaration(name, columns, formato) := BLOCK{
       projection(columns) :: columns.map(member(_, formato))
     }
   }
 
-  protected[scalaquery] def declaration(name: String, columns: List[Column], formato: String => String) ={
+  protected[scalaquery] def declaration(name: String, columns: List[Column], formato: Formato) ={
     val types = TYPE_TUPLE{ columns.map(_.typeOf.name) }
     val parent = RootClass.newClass("BasicTable") TYPE_OF(types)
 
-    OBJECTDEF(name) withParents(parent APPLY LIT(formato(name)))
+    OBJECTDEF(formato.tableName(name)) withParents(parent APPLY LIT(name))
   }
 
-  protected[scalaquery] def member(column: Column, formato: String => String)={
+  protected[scalaquery] def member(column: Column, formato: Formato)={
     val args = column match{
       case Column(_, _, Some(default), _, NullableColumn | NullablePrimaryKey) =>
         val defaultDef = LIT(0) INFIX("Default") APPLY(SOME(REF(default)))
@@ -38,7 +39,7 @@ object ObjectTree extends ((String,List[Column],String => String) => Tree){
         notNull :: Nil
     }
 
-    DEF(formato(column.name)) := REF("column") APPLYTYPE(column.typeOf.name) APPLY{ LIT(column.name) :: args }
+    DEF(formato.columnName(column.name)) := REF("column") APPLYTYPE(column.typeOf.name) APPLY{ LIT(column.name) :: args }
   }
 
   protected[scalaquery] def projection(columns: List[Column]) ={

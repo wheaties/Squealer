@@ -4,14 +4,15 @@ import com.wheaties.squealer.db._
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
+import com.wheaties.squealer.generator.Formato
 
-object ConstructorTree extends ((String,List[Column],String => String) => ClassDefStart){
-  def apply(name: String, columns: List[Column], formato: String => String) ={
+object ConstructorTree extends ((String,List[Column],Formato) => ClassDefStart){
+  def apply(name: String, columns: List[Column], formato: Formato) ={
     val argList = args(columns, formato)
     val constructor = if(columns.size < 23){
-      CASECLASSDEF(name.capitalize) withParams(argList)
+      CASECLASSDEF(formato.tableName(name)) withParams(argList)
     } else {
-      CLASSDEF(name.capitalize) withParams(argList)
+      CLASSDEF(formato.tableName(name)) withParams(argList)
     }
 
     if(columns.exists(col => col.colType == PrimaryKey || col.colType == NullablePrimaryKey)){
@@ -46,9 +47,9 @@ object ConstructorTree extends ((String,List[Column],String => String) => ClassD
     if(params.size < 23) caseDefault _ else classDefault _
   }
 
-  private[squeryl] def args(params: List[Column], formato: String => String):List[ValDef] ={
-    val start = param(params, formato)
-    val withDefault = default(params, formato)
+  private[squeryl] def args(params: List[Column], formato: Formato):List[ValDef] ={
+    val start = param(params, formato.columnName)
+    val withDefault = default(params, formato.columnName)
     params.map{
       _ match{
         case Column(name, typeOf, Some(default), _, ColumnDef | PrimaryKey) => withDefault(name, typeOf.name, default)
@@ -77,11 +78,11 @@ object ConstructorTree extends ((String,List[Column],String => String) => ClassD
   }
 }
 
-object DefinitionsTree extends ((List[Column],String => String) => List[Tree]){
+object DefinitionsTree extends (List[Column] => List[Tree]){
 
-  def apply(columns: List[Column], formato: String => String)={
+  def apply(columns: List[Column])={
     if(columns.exists(col => col.colType == PrimaryKey || col.colType == NullablePrimaryKey)){
-      id(columns, formato) :: optionConstructor (columns) :: Nil
+      id(columns) :: optionConstructor (columns) :: Nil
     }
     else{
       optionConstructor (columns) :: Nil
@@ -117,7 +118,7 @@ object DefinitionsTree extends ((List[Column],String => String) => List[Tree]){
     case TimeType => NEW("Time", LIT(0))
   }
 
-  protected[squeryl] def id(columns: List[Column], formato: String => String):Tree ={
+  protected[squeryl] def id(columns: List[Column]):Tree ={
     val keys = for{
       column <- columns if column.colType == PrimaryKey || column.colType == NullablePrimaryKey
     } yield REF(column.name)
