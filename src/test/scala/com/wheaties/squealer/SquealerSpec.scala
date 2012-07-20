@@ -1,7 +1,7 @@
 package com.wheaties.squealer
 
+import config.TableParams
 import db._
-import config.TableStatement
 import org.specs2.mutable.Specification
 import treehugger.forest._
 import definitions._
@@ -18,10 +18,8 @@ class SquealerSpec extends Specification{
     val db = Database("foo", Table("foo", None, Column("bar", IntType, None, None, ColumnDef) :: Nil) :: Nil)
 
     "produce a named table" in{
-      val statement = TableStatement("com.wheaties", "foo")
-      val out = squeal.generateTable(statement, db)
-
-      out must beSome
+      val statement = TableParams("com.wheaties", "foo")
+      true must beFalse
     }
   }
 

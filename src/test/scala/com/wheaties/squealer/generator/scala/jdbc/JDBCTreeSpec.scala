@@ -46,7 +46,11 @@ class JDBCTreeSpec extends Specification{
     }
   }
 
-  val formato = new Formato{ def format(name: String) = name }
+  val formato = new Formato{
+    def tableName(name: String) = name
+    def columnName(name: String) = name
+  }
+
   "JDBCTree on a table with multiple columns" should{
 
     val columns = for{indx <- 1 to 23} yield Column("a" + indx.toString, IntType, None, None, ColumnDef)

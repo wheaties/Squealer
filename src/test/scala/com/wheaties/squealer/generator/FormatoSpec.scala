@@ -23,26 +23,24 @@ class FormatoSpec extends Specification{
   }
 
   "camelCase (tables)" should{
-    def table(name: String, columnName: String = "yo") = Table(name, None, Column(columnName, IntType, None, None, ColumnDef) :: Nil)
-
     "handle snake case" in{
-      CamelCase(table("my_name")).name must be_==("MyName")
+      CamelCase.tableName("my_name") must be_==("MyName")
     }
 
     "handle lower case" in{
-      CamelCase(table("myname")).name must be_==("Myname")
+      CamelCase.tableName("myname") must be_==("Myname")
     }
 
     "handle name identity" in{
-      CamelCase(table("Myname")).name must be_==("Myname")
+      CamelCase.tableName("Myname") must be_==("Myname")
     }
 
     "handle column name snake case" in{
-      CamelCase(table("name", "column_name")).columns.head.name must be_==("columnName")
+      CamelCase.columnName("column_name") must be_==("columnName")
     }
 
     "handle column name identity" in{
-      CamelCase(table("name", "columnName")).columns.head.name must be_==("columnName")
+      CamelCase.columnName("columnName") must be_==("columnName")
     }
   }
 

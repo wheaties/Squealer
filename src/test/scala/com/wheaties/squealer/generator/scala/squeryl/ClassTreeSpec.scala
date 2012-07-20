@@ -5,8 +5,14 @@ import treehugger.forest._
 import definitions._
 import treehuggerDSL._
 import com.wheaties.squealer.db._
+import com.wheaties.squealer.generator.Formato
 
 class ConstructorTreeSpec extends Specification{
+  val formato = new Formato{
+    def tableName(name: String) = name
+    def columnName(name: String) = name
+  }
+
   "keyEntity" should{
     "handle a single primary key" in{
       val columns = Column("bar", IntType, Some("1"), None, PrimaryKey) :: Nil
@@ -24,17 +30,17 @@ class ConstructorTreeSpec extends Specification{
   "apply and indirectly args" should{
     "create default values" in{
       val columns = Column("bar", IntType, Some("1"), None, ColumnDef) :: Nil
-      val tree = ConstructorTree("Foo", columns, identity)
+      val tree = ConstructorTree("Foo", columns, formato)
       treeToString(tree.tree) must be_==("case class Foo(@Column(\"bar\") bar: Int = 1)")
     }
     "handle nullable types" in{
       val columns = Column("bar", IntType, None, None, NullableColumn) :: Nil
-      val tree = ConstructorTree("Foo", columns, identity)
+      val tree = ConstructorTree("Foo", columns, formato)
       treeToString(tree.tree) must be_==("case class Foo(@Column(\"bar\") bar: Option[Int])")
     }
     "make a class constructor for more than 22 columns" in{
       val columns = for{indx <- 0 to 22} yield Column("bar" + indx.toString, IntType, None, None, ColumnDef)
-      val tree = ConstructorTree("Foo", columns.toList, identity)
+      val tree = ConstructorTree("Foo", columns.toList, formato)
       treeToString(tree.tree) must be_==("class Foo(val @Column(\"bar0\") bar0: Int, val @Column(\"bar1\") bar1: Int, " +
         "val @Column(\"bar2\") bar2: Int, val @Column(\"bar3\") bar3: Int, val @Column(\"bar4\") bar4: Int, val @Column(\"bar5\") bar5: Int, " +
         "val @Column(\"bar6\") bar6: Int, val @Column(\"bar7\") bar7: Int, val @Column(\"bar8\") bar8: Int, val @Column(\"bar9\") bar9: Int, " +
@@ -47,22 +53,23 @@ class ConstructorTreeSpec extends Specification{
 }
 
 class DefinitionTreeSpec extends Specification{
+
   "id" should{
     "handle nullable primary keys" in{
       val columns = Column("bar", IntType, None, None, NullablePrimaryKey) :: Nil
-      val tree = DefinitionsTree.id(columns, identity)
+      val tree = DefinitionsTree.id(columns)
       treeToString(tree) must be_==("def id = compositeKey(bar)")
     }
     "handle primary keys" in{
       val columns = Column("bar", IntType, None, None, PrimaryKey) :: Nil
-      val tree = DefinitionsTree.id(columns, identity)
+      val tree = DefinitionsTree.id(columns)
       treeToString(tree) must be_==("def id = compositeKey(bar)")
     }
     "handle multiple keys" in{
       val columns = Column("foo", IntType, None, None, NullablePrimaryKey) ::
         Column("bar", IntType, None, None, PrimaryKey) ::
         Column("baz", IntType, None, None, PrimaryKey) :: Nil
-      val tree = DefinitionsTree.id(columns, identity)
+      val tree = DefinitionsTree.id(columns)
       treeToString(tree) must be_==("def id = compositeKey(foo, bar, baz)")
     }
   }
