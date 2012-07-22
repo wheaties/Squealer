@@ -16,3 +16,5 @@ libraryDependencies ++= Seq(
   "com.eed3si9n" %% "treehugger" % "0.1.4-SNAPSHOT",
   "org.skife.com.typesafe.config" % "typesafe-config" % "0.3.0"
 )
+
+mainClass in (Compile, run) := Some("com.wheaties.squealer.Main")
