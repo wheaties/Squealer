@@ -1,6 +1,7 @@
 package com.wheaties.squealer.config
 
 import com.typesafe.config.{ConfigObject, Config, ConfigFactory}
+import collection.JavaConversions.JListWrapper
 
 object ConfigParser extends (String => ConfigParams){
   val TABLES = "tables"
@@ -8,7 +9,7 @@ object ConfigParser extends (String => ConfigParams){
   val URL = "url"
   val PASSWORD = "password"
   val USER = "user"
-  val NAME = "name"
+  val NAMES = "names"
   val DATABASE = "database"
   val FORMAT = "format"
   val REGEX = "regex"
@@ -18,7 +19,7 @@ object ConfigParser extends (String => ConfigParams){
 
   def apply(fileName: String) ={
     val config = ConfigFactory.load(fileName)
-    val tables = parseTables(config.getObjectList(TABLES))
+    val tables = parseTables(config.getConfig(TABLES))
     val database = parseDatabase(config.getConfig(DATABASE))
     val format = parseFormat(config.getConfig(FORMAT))
 
@@ -33,30 +34,19 @@ object ConfigParser extends (String => ConfigParams){
     DatabaseParams(url, user, password)
   }
 
-  protected[squealer] def parseTables(config: java.util.List[_ <: ConfigObject]) = try{
-    val confIter = config.iterator()
-    val builder = List.newBuilder[TableParams]
-    while(confIter.hasNext){
-      val conf = confIter.next().toConfig
-      val name = conf.getString(NAME)
-      val pack = conf.getString(PACKAGE)
-      builder += TableParams(pack, name)
-    }
-    builder.result()
-  }
-  catch{
-    case ex => println(ex.getMessage); Nil
+  protected[squealer] def parseTables(config: Config) = {
+    val pack = config.getString(PACKAGE)
+    val names = JListWrapper(config.getStringList(NAMES)).toList
+
+    TableParams(pack, names)
   }
 
-  protected[squealer] def parseFormat(config: Config) = try{
+  protected[squealer] def parseFormat(config: Config) = {
     val regex = if(config.hasPath(REGEX)) Some(config.getString(REGEX)) else None
     val replaceWith = if(config.hasPath(REPLACE_WITH)) Some(config.getString(REPLACE_WITH)) else None
     val library = if(config.hasPath(LIBRARY)) Some(config.getString(LIBRARY)) else None
     val language = config.getString(LANGUAGE)
 
     FormatParams(language, library, regex, replaceWith)
-  }
-  catch{
-    case ex => println(ex.getMessage); FormatParams("scala", None, None, None)
   }
 }

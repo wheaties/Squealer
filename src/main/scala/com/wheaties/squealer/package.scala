@@ -7,6 +7,7 @@ package squealer{
 
   case class ParsedResult(classPackage: String, className: String, ast: Tree)
 
+  //TODO: ok, time to move this to the generator area and probably substantially change it
   trait Recorder[T]{
     def record(result: ParsedResult):Unit
   }

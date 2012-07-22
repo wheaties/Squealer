@@ -98,7 +98,7 @@ object DefinitionsTree extends (List[Column] => List[Tree]){
         case Column(_, typeOf, _, _, _) => defaultArg(typeOf)
       }
     }
-    DEF("this") := THIS APPLY(args)
+    DEFTHIS := THIS APPLY(args)
   }
 
   //TODO: check mapping against Squeryl

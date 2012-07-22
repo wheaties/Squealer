@@ -35,7 +35,7 @@ object ConstructorTree extends ((String,List[Column]) => ClassDefStart){
 object AssumptionTree extends (List[Column] => List[Tree]){
   def apply(params: List[Column]):List[Tree] = {
     @tailrec def make(remainder: List[Column], acc: List[Tree] = Nil):List[Tree] = remainder match{
-      case Column(name, _, _, _, NullableColumn) :: xs if check(remainder.head) =>
+      case Column(name, _, _, _, NullableColumn | NullablePrimaryKey) :: xs if check(remainder.head) =>
         val assumeOpt = REF(name) MAP LAMBDA(PARAM("x")) ==> makeAssumption(remainder.head, "x")
         make(xs, assumeOpt :: acc)
       case Column(name, _, _, _, NullablePrimaryKey) :: xs if check(remainder.head) =>

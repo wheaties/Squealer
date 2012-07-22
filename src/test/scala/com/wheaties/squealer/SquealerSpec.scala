@@ -18,7 +18,7 @@ class SquealerSpec extends Specification{
     val db = Database("foo", Table("foo", None, Column("bar", IntType, None, None, ColumnDef) :: Nil) :: Nil)
 
     "produce a named table" in{
-      val statement = TableParams("com.wheaties", "foo")
+      val statement = TableParams("com.wheaties", List("foo"))
       true must beFalse
     }
   }

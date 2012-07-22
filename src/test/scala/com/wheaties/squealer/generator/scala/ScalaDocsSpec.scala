@@ -6,6 +6,7 @@ import com.wheaties.squealer.generator.Formato
 
 class ScalaDocsSpec extends Specification{
   val formato = new Formato{
+    def databaseName(name: String) = name
     def tableName(name: String) = name
     def columnName(name: String) = name
   }

@@ -1,14 +1,14 @@
 package com.wheaties.squealer.generator.scala.scalaquery
 
-import com.wheaties.squealer.db.Table
-import com.wheaties.squealer.generator.Formato
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
 import com.wheaties.squealer.generator.scala.ScalaDocs
+import com.wheaties.squealer.generator.{LibraryGenerator, Formato}
+import com.wheaties.squealer.db.{Database, Table}
 
-class ScalaQueryTree extends ((Table,String,Formato) => Tree){
-  def apply(table: Table, pack: String, formato: Formato):Tree ={
+object ScalaQueryGenerator extends LibraryGenerator{
+  def writeTable(table: Table, pack: String, formato: Formato) ={
     val imports = IMPORT("java.sql._") ::
       IMPORT("org.scalaquery.ql.basic.BasicTable") ::
       IMPORT("org.scalaquery.ql.TypeMapper._") ::
@@ -17,11 +17,15 @@ class ScalaQueryTree extends ((Table,String,Formato) => Tree){
     val objekt = ObjectTree(table.name, table.columns, formato) withComments(comments)
     val block =  imports ::: objekt :: Nil
 
-    if(pack.isEmpty){
+    val tree = if(pack.isEmpty){
       BLOCK{ block } withoutPackage
     }
     else{
       BLOCK{ block } inPackage(pack)
     }
+
+    treeToString(tree)
   }
+
+  def writeDatabase(db: Database, group: String, formato: Formato) = ""
 }

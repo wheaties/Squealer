@@ -8,6 +8,7 @@ import com.wheaties.squealer.generator.Formato
 class ObjectTreeSpec extends Specification{
   val column = Column("bar", IntType, None, None, ColumnDef)
   val formato = new Formato{
+    def databaseName(name: String) = name
     def tableName(name: String) = name
     def columnName(name: String) = name
   }

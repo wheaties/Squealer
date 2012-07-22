@@ -2,7 +2,7 @@ package com.wheaties.squealer
 
 import config._
 import db._
-import generator.scala.jdbc.JDBCTree
+import generator.scala.jdbc.JDBCGenerator
 
 object Main extends Squealer{
   def main(args: Array[String]){
@@ -33,7 +33,7 @@ trait Squealer{
   }
 
   /*def generateTable(table: TableParams, dataSource: Database, format: FormatParams) ={
-    val tree = for(dbTable <- dataSource.tables.find(_.name == table.name)) yield JDBCTree(dbTable, table.pack, format)
+    val tree = for(dbTable <- dataSource.tables.find(_.name == table.name)) yield JDBCGenerator(dbTable, table.pack, format)
     tree.map(ParsedResult(table.pack, table.name, _))
   }*/
 }

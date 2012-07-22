@@ -35,7 +35,13 @@ object ColumnNameLens extends ColumnLens[String]{
   protected def set(column: Column, value: String) = column.copy(name = value)
 }
 
+//TODO: This even needed anymore? Would have been good for sql parsing but no use now, no?
 object ColumnTypeLens extends ColumnLens[ColumnType]{
   protected def get(column: Column) = column.colType
   protected def set(column: Column, value: ColumnType) = column.copy(colType = value)
+}
+
+object TableNameLens extends Lens[Table,String]{
+  protected def get(table: Table) = table.name
+  protected def set(table: Table, value: String) = table.copy(name = value)
 }
