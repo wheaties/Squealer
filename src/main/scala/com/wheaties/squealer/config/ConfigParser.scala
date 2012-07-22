@@ -1,6 +1,6 @@
 package com.wheaties.squealer.config
 
-import com.typesafe.config.{ConfigObject, Config, ConfigFactory}
+import com.typesafe.config.{Config, ConfigFactory}
 import collection.JavaConversions.JListWrapper
 
 object ConfigParser extends (String => ConfigParams){

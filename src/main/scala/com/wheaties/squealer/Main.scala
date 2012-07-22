@@ -5,7 +5,7 @@ import db._
 import generator.scala.ScalaGenerator
 
 object Main extends Squealer{
-  def main(args: Array[String]):Unit = {
+  def main(args: Array[String]):Unit = try{
     val exceptions = if(args.isEmpty){
       action(ConfigParser("squealer.conf"))
     }
@@ -14,6 +14,9 @@ object Main extends Squealer{
     }
 
     exceptions foreach println
+  }
+  catch{
+    case ex:Exception => println(ex)
   }
 }
 
