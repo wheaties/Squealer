@@ -45,3 +45,8 @@ object TableNameLens extends Lens[Table,String]{
   protected def get(table: Table) = table.name
   protected def set(table: Table, value: String) = table.copy(name = value)
 }
+
+object DatabaseTableLens extends Lens[Database,List[Table]]{
+  protected def get(db: Database) = db.tables
+  protected def set(db: Database, value: List[Table]) = db.copy(tables = value)
+}

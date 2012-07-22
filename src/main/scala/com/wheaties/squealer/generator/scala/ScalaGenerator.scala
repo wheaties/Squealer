@@ -9,17 +9,17 @@ import jdbc.JDBCGenerator
 import scalaquery.ScalaQueryGenerator
 import squeryl.SquerylGenerator
 
-class ScalaGenerator(formato: Formato, gen: LibraryGenerator) extends ((Database,List[Table],String) => List[Exception]){
+class ScalaGenerator(formato: Formato, gen: LibraryGenerator) extends ((Database,String) => List[Exception]){
   protected[generator] val basePath = "src" + File.pathSeparator + "main" + File.pathSeparator + "scala"
 
-  def apply(db: Database, tables: List[Table], pack: String) = {
+  def apply(db: Database, pack: String) = {
     @tailrec def rollback(in: List[Result[Exception,File]], reasons: List[Exception]): List[Exception] = in match {
       case Success(file:File) :: rest => file.delete(); rollback(rest, reasons)
       case Failure(ex) :: rest => rollback(rest, ex :: reasons)
       case Nil => reasons
     }
 
-    val results = writeDatabase(db.copy(tables = tables), pack) :: tables.map(writeTable(_, pack))
+    val results = writeDatabase(db, pack) :: db.tables.map(writeTable(_, pack))
     if(results.exists(_.isInstanceOf[Failure[Exception,File]])){
       rollback(results, Nil)
     }
@@ -67,12 +67,12 @@ object ScalaGenerator{
   protected val squeryl = """(?i)squeryl""".r
   protected val scalaquery = """(?i)scalaquery""".r
 
-  def apply(library: String, regex: Option[String], replaceWith: Option[String])={
+  def apply(library: Option[String], regex: Option[String], replaceWith: Option[String])={
     val formato = makeFormato(regex, replaceWith)
 
     library match{
-      case squeryl(_) => new ScalaGenerator(formato, SquerylGenerator)
-      case scalaquery(_) => new ScalaGenerator(formato, ScalaQueryGenerator)
+      case Some(squeryl(_)) => new ScalaGenerator(formato, SquerylGenerator)
+      case Some(scalaquery(_)) => new ScalaGenerator(formato, ScalaQueryGenerator)
       case _ => new ScalaGenerator(formato, JDBCGenerator)
     }
   }
