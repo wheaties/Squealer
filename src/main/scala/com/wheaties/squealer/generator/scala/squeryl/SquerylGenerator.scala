@@ -34,8 +34,7 @@ object SquerylGenerator extends LibraryGenerator{
   }
 
   def writeDatabase(db: Database, pack: String, formato: Formato):String = {
-    val imports = IMPORT("org.squeryl.PrimitiveTypeMode._") ::
-      IMPORT("org.squery.Schema") :: Nil
+    val imports = IMPORT("org.squeryl.PrimitiveTypeMode._") :: IMPORT("org.squery.Schema") :: Nil
     val obj = OBJECTDEF(formato.databaseName(db.name)) withParents("Schema") := BLOCK{
       db.tables.map(table => tableDef(table.name, formato))
     }

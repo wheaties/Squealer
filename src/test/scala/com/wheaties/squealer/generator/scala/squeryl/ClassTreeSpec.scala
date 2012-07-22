@@ -79,29 +79,29 @@ class DefinitionTreeSpec extends Specification{
     "handle nullable fields with a default" in{
       val columns = Column("foo", IntType, Some("1"), None, NullablePrimaryKey) :: Nil
       val tree = DefinitionsTree.optionConstructor(columns)
-      treeToString(tree) must be_==("def this() = this(Some(1))")
+      treeToString(tree) must be_==("def this = this(Some(1))")
     }
     "handle non-nullable fields with a default" in{
       val columns = Column("foo", IntType, Some("1"), None, ColumnDef) :: Nil
       val tree = DefinitionsTree.optionConstructor(columns)
-      treeToString(tree) must be_==("def this() = this(1)")
+      treeToString(tree) must be_==("def this = this(1)")
     }
     "handle nullable fields without a default" in{
       val columns = Column("foo", IntType, None, None, NullableColumn) :: Nil
       val tree = DefinitionsTree.optionConstructor(columns)
-      treeToString(tree) must be_==("def this() = this(Some(0))")
+      treeToString(tree) must be_==("def this = this(Some(0))")
     }
     "handle nullable fields without a default" in{
       val columns = Column("foo", IntType, None, None, ColumnDef) :: Nil
       val tree = DefinitionsTree.optionConstructor(columns)
-      treeToString(tree) must be_==("def this() = this(0)")
+      treeToString(tree) must be_==("def this = this(0)")
     }
     "multiple fields" in{
       val columns = Column("foo", IntType, Some("1"), None, ColumnDef) ::
         Column("bar", IntType, None, None, ColumnDef) ::
         Column("baz", IntType, None, None, NullableColumn) :: Nil
       val tree = DefinitionsTree.optionConstructor(columns)
-      treeToString(tree) must be_==("def this() = this(1, 0, Some(0)")
+      treeToString(tree) must be_==("def this = this(1, 0, Some(0))")
     }
   }
 

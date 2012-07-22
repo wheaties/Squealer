@@ -82,10 +82,10 @@ object DefinitionsTree extends (List[Column] => List[Tree]){
 
   def apply(columns: List[Column])={
     if(columns.exists(col => col.colType == PrimaryKey || col.colType == NullablePrimaryKey)){
-      id(columns) :: optionConstructor (columns) :: Nil
+      id(columns) :: optionConstructor(columns) :: Nil
     }
     else{
-      optionConstructor (columns) :: Nil
+      optionConstructor(columns) :: Nil
     }
   }
 
