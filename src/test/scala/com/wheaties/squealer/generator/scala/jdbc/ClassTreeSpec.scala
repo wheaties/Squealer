@@ -212,7 +212,7 @@ class HashCodeTreeSpec extends Specification{
   "Table with more than 22 columns but no Primary Key" should{
     val columns = for{i <- 0 to 22} yield Column("a", IntType, None, None, ColumnDef)
     val tree = HashCodeTree(columns.toList)
-    treeToString(tree) must be_==("override lazy val hashCode = List(a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode).reduceLeft((left, right) => (left * 17) ^ right)")
+    treeToString(tree) must be_==("override lazy val hashCode = List(a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode, a.hashCode).reduceLeft((left, right) => (left * 17) ^ right)")
   }
 }
 
