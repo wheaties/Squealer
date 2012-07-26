@@ -12,6 +12,7 @@ object ConfigParser extends (String => ConfigParams){
   val USER = "user"
   val NAMES = "names"
   val DATABASE = "database"
+  val DRIVER = "driver"
   val FORMAT = "format"
   val REGEX = "regex"
   val REPLACE_WITH = "replace_with"
@@ -31,8 +32,9 @@ object ConfigParser extends (String => ConfigParams){
     val url = config.getString(URL)
     val user = config.getString(USER)
     val password = config.getString(PASSWORD)
+    val driver = config.getString(DRIVER)
 
-    DatabaseParams(url, user, password)
+    DatabaseParams(url, user, password, driver)
   }
 
   protected[squealer] def parseTables(config: Config) = {

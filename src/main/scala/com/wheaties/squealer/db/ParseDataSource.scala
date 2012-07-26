@@ -3,8 +3,9 @@ package com.wheaties.squealer.db
 import java.sql.Types._
 import java.sql.{Connection, DriverManager, DatabaseMetaData}
 
-object ParseDataSource extends ((String,String,String) => Database){
-  def apply(url: String, account: String, password: String):Database ={
+object ParseDataSource extends ((String,String,String,String) => Database){
+  def apply(url: String, account: String, password: String, driver: String):Database ={
+    Class.forName(driver)
     val connection = DriverManager.getConnection(url, account, password)
 
     parseDatabase(url, connection)
