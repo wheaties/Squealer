@@ -1,8 +1,10 @@
 name := "Squealer"
 
-version := "0.1-SNAPSHOT"
+version := "0.1"
 
 scalaVersion := "2.9.2"
+
+seq(com.github.retronym.SbtOneJar.oneJarSettings: _*)
 
 resolvers ++= Seq(
   "snapshots" at "http://scala-tools.org/repo-snapshots",

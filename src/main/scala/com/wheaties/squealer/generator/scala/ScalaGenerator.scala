@@ -9,6 +9,7 @@ import jdbc.JDBCGenerator
 import scalaquery.ScalaQueryGenerator
 import squeryl.SquerylGenerator
 
+//TODO: This is so horribly OO. Really need to think about type classes for the libraries/language combo
 class ScalaGenerator(formato: Formato, gen: LibraryGenerator) extends ((Database,String) => List[Exception]){
   protected[generator] val basePath = "src" + File.pathSeparator + "main" + File.pathSeparator + "scala"
 

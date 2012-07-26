@@ -2,6 +2,7 @@ package com.wheaties.squealer.config
 
 import com.typesafe.config.{Config, ConfigFactory}
 import collection.JavaConversions.JListWrapper
+import java.io.{FileReader, FileInputStream, File}
 
 object ConfigParser extends (String => ConfigParams){
   val TABLES = "tables"
@@ -18,7 +19,7 @@ object ConfigParser extends (String => ConfigParams){
   val LIBRARY = "library"
 
   def apply(fileName: String) ={
-    val config = ConfigFactory.load(fileName)
+    val config = ConfigFactory.parseFile(new File(fileName))
     val tables = parseTables(config.getConfig(TABLES))
     val database = parseDatabase(config.getConfig(DATABASE))
     val format = parseFormat(config.getConfig(FORMAT))
