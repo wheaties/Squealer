@@ -44,7 +44,7 @@ trait Squealer{
     val DatabaseParams(url, user, password, driver) = db
 
     val source = ParseDataSource(url, user, password, driver)
-    val database = DatabaseTableLens modify(source, _.filter(tables.names contains))
+    val database = DatabaseTableLens modify(source, _.filter(table => tables.names contains(table.name)))
     val generator = ScalaGenerator(format.library, format.regex, format.replacement)
 
     generator(database, tables.pack)
