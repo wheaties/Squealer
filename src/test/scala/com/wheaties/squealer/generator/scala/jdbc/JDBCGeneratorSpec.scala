@@ -58,7 +58,7 @@ class JDBCGeneratorSpec extends Specification{
     val tree = JDBCGenerator.writeTable(Table("Foo", None, columns.toList), "", formato)
 
     "produce an object" in{
-      treeToString(tree) must contain("object Foo {\n  def apply(result: ResultSet) = new Foo(result.getInt(a1), result.getInt(a2), result.getInt(a3), result.getInt(a4), result.getInt(a5), result.getInt(a6), result.getInt(a7), result.getInt(a8), result.getInt(a9), result.getInt(a10), result.getInt(a11), result.getInt(a12), result.getInt(a13), result.getInt(a14), result.getInt(a15), result.getInt(a16), result.getInt(a17), result.getInt(a18), result.getInt(a19), result.getInt(a20), result.getInt(a21), result.getInt(a22), result.getInt(a23))\n}")
+      treeToString(tree) must contain("object Foo {\n  def apply(result: ResultSet) = new Foo(result.getInt(a1), result.getInt(a2), result.getInt(a3), result.getInt(a4), result.getInt(a5), result.getInt(a6), result.getInt(a7), result.getInt(a8), result.getInt(a9), result.getInt(a10), result.getInt(a11), result.getInt(a12), result.getInt(a13), result.getInt(a14), result.getInt(a15), result.getInt(a16), result.getInt(a17), result.getInt(a18), result.getInt(a19), result.getInt(a20), result.getInt(a21), result.getInt(a22), result.getInt(a23))\n  def apply(result: ResultSet, ns: String) = new Foo(result.getInt(ns + a1), result.getInt(ns + a2), result.getInt(ns + a3), result.getInt(ns + a4), result.getInt(ns + a5), result.getInt(ns + a6), result.getInt(ns + a7), result.getInt(ns + a8), result.getInt(ns + a9), result.getInt(ns + a10), result.getInt(ns + a11), result.getInt(ns + a12), result.getInt(ns + a13), result.getInt(ns + a14), result.getInt(ns + a15), result.getInt(ns + a16), result.getInt(ns + a17), result.getInt(ns + a18), result.getInt(ns + a19), result.getInt(ns + a20), result.getInt(ns + a21), result.getInt(ns + a22), result.getInt(ns + a23))\n}")
     }
     "import java.sql" in{
       treeToString(tree) must contain("import java.sql._")
@@ -70,7 +70,7 @@ class JDBCGeneratorSpec extends Specification{
     val tree = JDBCGenerator.writeTable(Table("Foo", None, Column("a", IntType, None, None, PrimaryKey) :: Nil), "", formato)
 
     "produce an object" in{
-      treeToString(tree) must contain("object Foo {\n  def apply(result: ResultSet) = new Foo(result.getInt(a))\n}")
+      treeToString(tree) must contain("object Foo {\n  def apply(result: ResultSet) = new Foo(result.getInt(a))\n  def apply(result: ResultSet, ns: String) = new Foo(result.getInt(ns + a))\n}")
     }
 
     "import java.sql" in{
