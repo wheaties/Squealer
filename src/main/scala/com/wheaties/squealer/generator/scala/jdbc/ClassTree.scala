@@ -152,7 +152,7 @@ object EqualsTree extends ((String, List[Column]) => Tree){
     (CASE(WILDCARD) ==> FALSE) :: Nil
   }
 
-  @tailrec private[jdbc] def withKeys(remainder: List[Column], acc: List[Infix] = Nil):Infix = remainder match{
+  @tailrec private[jdbc] def withKeys(remainder: List[Column], acc: List[Infix] = Nil):Tree = remainder match{
     case Column(name, _, _, _, PrimaryKey) :: xs =>
       val param = (THIS DOT name) ANY_== REF(name)
       withKeys(xs, param :: acc)
@@ -160,7 +160,7 @@ object EqualsTree extends ((String, List[Column]) => Tree){
       val param = (THIS DOT name) ANY_== REF(name)
       withKeys(xs, param :: acc)
     case x :: xs => withKeys(xs, acc)
-    case Nil => acc.reduce((left, right) => left AND right)
+    case Nil => INFIX_CHAIN("&&", acc)
   }
 
   private[jdbc] def pattern(params: List[Column]):List[Ident] = params map{
@@ -175,9 +175,9 @@ object EqualsTree extends ((String, List[Column]) => Tree){
       (CASE(ID("x") withType(tableName)) ==>(withoutKeys(params))) :: (CASE(WILDCARD) ==> FALSE) :: Nil
   }
 
-  private[jdbc] def withoutKeys(params: List[Column]):Infix ={
+  private[jdbc] def withoutKeys(params: List[Column]):Tree ={
     val checks = params.map(col => (THIS DOT col.name) ANY_== (REF("x") DOT col.name) )
-    checks.reduce((left, right) => left AND right)
+    INFIX_CHAIN("&&", checks)
   }
 }
 

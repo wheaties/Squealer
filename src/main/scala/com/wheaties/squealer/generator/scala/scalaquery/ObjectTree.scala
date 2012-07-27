@@ -20,8 +20,8 @@ package com.wheaties.squealer.generator.scala.scalaquery
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
-import com.wheaties.squealer.db.{NullablePrimaryKey, NullableColumn, Column}
 import com.wheaties.squealer.generator.Formato
+import com.wheaties.squealer.db.{StringType, NullablePrimaryKey, NullableColumn, Column}
 
 /**
  * Creates a ScalaQuery object representing a table in the database.
@@ -43,12 +43,14 @@ object ObjectTree extends ((String,List[Column],Formato) => Tree){
 
   protected[scalaquery] def member(column: Column, formato: Formato)={
     val args = column match{
-      case Column(_, _, Some(default), _, NullableColumn | NullablePrimaryKey) =>
-        val defaultDef = LIT(0) INFIX("Default") APPLY(SOME(REF(default)))
+      case Column(_, typeOf, Some(default), _, NullableColumn | NullablePrimaryKey) =>
+        val value = if(typeOf == StringType) LIT(default) else REF(default)
+        val defaultDef = LIT(0) INFIX("Default") APPLY(SOME(value))
         defaultDef :: Nil
-      case Column(_, _, Some(default), _, _) =>
+      case Column(_, typeOf, Some(default), _, _) =>
         val notNull = LIT(0) POSTFIX("NotNull")
-        val defaultDef = LIT(0) INFIX("Default") APPLY(REF(default))
+        val value = if(typeOf == StringType) LIT(default) else REF(default)
+        val defaultDef = LIT(0) INFIX("Default") APPLY(value)
         notNull :: defaultDef :: Nil
       case Column(_, _, _, _, NullableColumn | NullablePrimaryKey) => Nil
       case _ =>
@@ -62,7 +64,7 @@ object ObjectTree extends ((String,List[Column],Formato) => Tree){
   protected[scalaquery] def projection(columns: List[Column]) ={
     val tilde = columns.map(_.name) match{
       case List(single) => REF(single)
-      case multi => multi.map(REF(_)).reduce( application )
+      case multi => INFIX_CHAIN("~", multi.map(REF(_)))
     }
 
     DEF("*") := tilde

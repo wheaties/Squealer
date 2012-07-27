@@ -95,11 +95,17 @@ object ScalaGenerator{
   def apply(library: Option[String], regex: Option[String], replaceWith: Option[String])={
     val formato = makeFormato(regex, replaceWith)
 
-    library match{
-      case Some(squeryl(_)) => new ScalaGenerator(formato, SquerylGenerator)
-      case Some(scalaquery(_)) => new ScalaGenerator(formato, ScalaQueryGenerator)
-      case _ => new ScalaGenerator(formato, JDBCGenerator)
-    }
+    val squerylGen = for{
+      name <- library
+      _ <- squeryl findFirstIn(name)
+    } yield SquerylGenerator
+    val scalaQueryGen = for{
+      name <- library
+      _ <- scalaquery findFirstIn(name)
+    } yield ScalaQueryGenerator
+    val gen = squerylGen orElse scalaQueryGen getOrElse JDBCGenerator
+
+    new ScalaGenerator(formato, gen)
   }
 
   protected[scala] def makeFormato(regex: Option[String], replaceWith: Option[String]) ={

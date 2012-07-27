@@ -137,7 +137,7 @@ class EqualsTreeSpec extends Specification{
 
     "create a proper equals method" in{
       val tree = EqualsTree("Foo", keys)
-      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case Foo(a, b) => (this.b == b) && (this.a == a)\n    case _ => false\n  }")
+      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case Foo(a, b) => this.b == b && (this.a == a)\n    case _ => false\n  }")
     }
 
     "create a list of one pattern matching argument" in{
@@ -147,7 +147,7 @@ class EqualsTreeSpec extends Specification{
 
     "create a list of one check" in{
       val tree = EqualsTree.withKeys(keys)
-      treeToString(tree) must be_==("(this.b == b) && (this.a == a)")
+      treeToString(tree) must be_==("this.b == b && (this.a == a)")
     }
   }
 
@@ -173,10 +173,9 @@ class EqualsTreeSpec extends Specification{
   "Table with more than 22 columns and no primary keys" should{
     val columns = for{i <- 0 to 22} yield Column("a", IntType, None, None, ColumnDef)
 
-    //TODO: figure out a less ugly way of making this happen, i.e. (((((((((... this ain't lisp
     "create a proper equals method" in{
       val tree = EqualsTree("Foo", columns.toList)
-      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case (x: Foo) => ((((((((((((((((((((((this.a == x.a) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)\n    case _ => false\n  }")
+      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case (x: Foo) => this.a == x.a && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a) && (this.a == x.a)\n    case _ => false\n  }")
     }
   }
 }
