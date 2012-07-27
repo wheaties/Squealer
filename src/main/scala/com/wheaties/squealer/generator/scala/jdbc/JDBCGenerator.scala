@@ -28,7 +28,7 @@ object JDBCGenerator extends LibraryGenerator {
   def writeTable(table: Table, pack: String, formato: Formato) ={
     val comments = ScalaDocs(table, formato)
     val columns = table.columns.map(ColumnNameLens.modify(_, formato.columnName))
-    val clazz = makeClass(formato.tableName(table.name), columns, comments)
+    val clazz = makeClass(formato.tableName(table.name), columns) withComments(comments)
     val objekt = ObjectTree(table.name, table.columns)
     val block = IMPORT("java.sql._") :: clazz :: objekt :: Nil
 
@@ -42,10 +42,10 @@ object JDBCGenerator extends LibraryGenerator {
     treeToString(tree)
   }
 
-  private[jdbc] def makeClass(name: String, columns: List[Column], comments: List[String]):ClassDef ={
+  private[jdbc] def makeClass(name: String, columns: List[Column]):ClassDef ={
     ConstructorTree(name, columns) := BLOCK{
       AssumptionTree(columns) ::: HashCodeTree(columns) :: EqualsTree(name, columns) ::  CopyTree(name, columns) :: Nil
-    } withComments(comments)
+    }
   }
 
   def writeDatabase(db: Database, group: String, formato: Formato) = ""

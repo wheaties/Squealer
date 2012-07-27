@@ -52,16 +52,16 @@ object ObjectTree extends ((String,List[Column]) => Tree){
   }
 
   protected[jdbc] def nakedGet(name: String, typeOf: DataType):Apply = if(typeOf == BinaryType){
-    REF("result") DOT("getBytes") APPLY REF(name)
+    REF("result") DOT("getBytes") APPLY LIT(name)
   }
   else{
-    REF("result") DOT("get" + typeOf.name) APPLY REF(name)
+    REF("result") DOT("get" + typeOf.name) APPLY LIT(name)
   }
 
   protected[jdbc] def namespacedGet(name: String, typeOf: DataType):Apply = if(typeOf == BinaryType){
-    REF("result") DOT("getBytes") APPLY{ REF("ns") INFIX("+") APPLY REF(name) }
+    REF("result") DOT("getBytes") APPLY{ REF("ns") INFIX("+") APPLY LIT(name) }
   }
   else{
-    REF("result") DOT("get" + typeOf.name) APPLY{ REF("ns") INFIX("+") APPLY REF(name) }
+    REF("result") DOT("get" + typeOf.name) APPLY{ REF("ns") INFIX("+") APPLY LIT(name) }
   }
 }

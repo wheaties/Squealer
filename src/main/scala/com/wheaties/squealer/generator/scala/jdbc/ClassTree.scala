@@ -29,18 +29,28 @@ object ConstructorTree extends ((String,List[Column]) => ClassDefStart){
     start withParams(make(params))
   }
 
-  private def paramStart(params: List[Column]) = if(params.size < 23) caseStart _ else classStart _
-  private def caseStart(name: String, typeOf: Type):ValDef = PARAM(name, typeOf)
-  private def classStart(name: String, typeOf: Type):ValDef = VAL(name, typeOf)
-  private def defaultStart(params: List[Column]) = if(params.size < 23) caseDefault _ else classDefault _
-  private def caseDefault(name: String, typeOf: Type, default: String):ValDef = PARAM(name, typeOf) := LIT(default)
-  private def classDefault(name: String, typeOf: Type, default: String):ValDef = VAL(name, typeOf) := LIT(default)
+  private def paramStart(params: List[Column]) ={
+    def caseStart(name: String, typeOf: Type):ValDef = PARAM(name, typeOf)
+    def classStart(name: String, typeOf: Type):ValDef = VAL(name, typeOf)
 
-  private[squealer] def make(params: List[Column]):List[ValDef] ={
+    if(params.size < 23) caseStart _ else classStart _
+  }
+
+  private def defaultStart(params: List[Column]) ={
+    def caseDefault(name: String, typeOf: Type, default: String):ValDef = PARAM(name, typeOf) := REF(default)
+    def classDefault(name: String, typeOf: Type, default: String):ValDef = VAL(name, typeOf) := REF(default)
+
+    if(params.size < 23) caseDefault _ else classDefault _
+  }
+
+  protected[jdbc] def make(params: List[Column]):List[ValDef] ={
     val start = paramStart(params)
     val withDefault = defaultStart(params)
     params.map{
       _ match{
+        case Column(name, StringType, Some(default), _, ColumnDef | PrimaryKey) =>
+          withDefault(name, StringType.name, "\"" + default + "\"")
+        case Column(name, FloatType, Some(default), _, ColumnDef | PrimaryKey) => withDefault(name, FloatType.name, default + "f")
         case Column(name, typeOf, Some(default), _, ColumnDef | PrimaryKey) => withDefault(name, typeOf.name, default)
         case Column(name, typeOf, _, _, ColumnDef | PrimaryKey) => start(name, typeOf.name)
         case Column(name, typeOf, _, _, NullableColumn | NullablePrimaryKey) => start(name, TYPE_OPTION(typeOf.name))
@@ -66,9 +76,9 @@ object AssumptionTree extends (List[Column] => List[Tree]){
     make(params)
   }
 
-  private[squealer] def check(column: Column) = column.length > 0 || column.precision > 0 || column.size > 0 || column.scale > 0
+  private[jdbc] def check(column: Column) = column.length > 0 || column.precision > 0 || column.size > 0 || column.scale > 0
 
-  private[squealer] def makeAssumption(column: Column, name: String) = Predef_assume APPLY{
+  private[jdbc] def makeAssumption(column: Column, name: String) = Predef_assume APPLY{
     val (condition, msg) = column match{
       case _ if column.size > 0 => (assumption(name, "size", column.size), message(name, "size", column.size))
       case _ if column.length > 0 => (assumption(name, "length", column.length), message(name, "length", column.length))
@@ -98,13 +108,13 @@ object HashCodeTree extends (List[Column] => Tree){
     }
   }
 
-  private[squealer] def defineHashCode(hashed: List[SelectStart]):Tree ={
+  private[jdbc] def defineHashCode(hashed: List[SelectStart]):Tree ={
     LIST(hashed) REDUCELEFT LAMBDA(PARAM(TUPLE(REF("left"), REF("right")))) ==>{
       PAREN(REF("left") INT_* LIT(17)) INFIX("^") APPLY REF("right")
     }
   }
 
-  @tailrec private[squealer] def withKeys(remainder: List[Column], acc: List[SelectStart] = Nil):List[SelectStart] = remainder match{
+  @tailrec private[jdbc] def withKeys(remainder: List[Column], acc: List[SelectStart] = Nil):List[SelectStart] = remainder match{
     case Column(name, _, _ ,_, PrimaryKey) :: xs =>
       val key = REF(name) DOT "hashCode"
       withKeys(xs, key :: acc)
@@ -115,7 +125,7 @@ object HashCodeTree extends (List[Column] => Tree){
     case Nil => acc
   }
 
-  private[squealer] def withoutKeys(params: List[Column]) = params.map(col => REF(col.name) DOT "hashCode")
+  private[jdbc] def withoutKeys(params: List[Column]) = params.map(col => REF(col.name) DOT "hashCode")
 }
 
 object EqualsTree extends ((String, List[Column]) => Tree){
@@ -131,29 +141,29 @@ object EqualsTree extends ((String, List[Column]) => Tree){
     }
   }
 
-  private[squealer] def defineEquals(made: List[CaseDef]) ={
+  private[jdbc] def defineEquals(made: List[CaseDef]) ={
     DEF("equals") withFlags(Flags.OVERRIDE) withParams(PARAM("that", "Any")) := REF("that") MATCH{
       made
     }
   }
 
-  private[squealer] def makeWithKeys(tableName: String, params: List[Column]):List[CaseDef] ={
+  private[jdbc] def makeWithKeys(tableName: String, params: List[Column]):List[CaseDef] ={
     (CASE(REF(tableName) UNAPPLY pattern(params)) ==>(withKeys(params))) ::
     (CASE(WILDCARD) ==> FALSE) :: Nil
   }
 
-  @tailrec private[squealer] def withKeys(remainder: List[Column], acc: List[Infix] = Nil):Infix = remainder match{
+  @tailrec private[jdbc] def withKeys(remainder: List[Column], acc: List[Infix] = Nil):Infix = remainder match{
     case Column(name, _, _, _, PrimaryKey) :: xs =>
-      val param = (THIS DOT name) ANY_== (REF("that") DOT name)
+      val param = (THIS DOT name) ANY_== REF(name)
       withKeys(xs, param :: acc)
     case Column(name, _, _, _, NullablePrimaryKey) :: xs =>
-      val param = (THIS DOT name) ANY_== (REF("that") DOT name)
+      val param = (THIS DOT name) ANY_== REF(name)
       withKeys(xs, param :: acc)
     case x :: xs => withKeys(xs, acc)
     case Nil => acc.reduce((left, right) => left AND right)
   }
 
-  private[squealer] def pattern(params: List[Column]):List[Ident] = params map{
+  private[jdbc] def pattern(params: List[Column]):List[Ident] = params map{
     _ match{
         case Column(name, _, _, _, PrimaryKey) => ID(name)
         case Column(name, _, _, _, NullablePrimaryKey) => ID(name)
@@ -161,12 +171,12 @@ object EqualsTree extends ((String, List[Column]) => Tree){
     }
   }
 
-  private[squealer] def makeWithoutKeys(tableName: String, params: List[Column]):List[CaseDef] ={
+  private[jdbc] def makeWithoutKeys(tableName: String, params: List[Column]):List[CaseDef] ={
       (CASE(ID("x") withType(tableName)) ==>(withoutKeys(params))) :: (CASE(WILDCARD) ==> FALSE) :: Nil
   }
 
-  private[squealer] def withoutKeys(params: List[Column]):Infix ={
-    val checks = params.map(col => (THIS DOT col.name) ANY_== (REF("that") DOT col.name) )
+  private[jdbc] def withoutKeys(params: List[Column]):Infix ={
+    val checks = params.map(col => (THIS DOT col.name) ANY_== (REF("x") DOT col.name) )
     checks.reduce((left, right) => left AND right)
   }
 }

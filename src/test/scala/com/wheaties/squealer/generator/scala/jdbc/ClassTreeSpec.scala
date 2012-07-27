@@ -118,7 +118,7 @@ class EqualsTreeSpec extends Specification{
 
     "create a proper equals method" in{
       val tree = EqualsTree("Foo", keys)
-      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case Foo(a) => this.a == that.a\n    case _ => false\n  }")
+      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case Foo(a) => this.a == a\n    case _ => false\n  }")
     }
 
     "create a list of one pattern matching argument" in{
@@ -128,7 +128,7 @@ class EqualsTreeSpec extends Specification{
 
     "create a list of one check" in{
       val tree = EqualsTree.withKeys(keys)
-      treeToString(tree) must be_==("this.a == that.a")
+      treeToString(tree) must be_==("this.a == a")
     }
   }
 
@@ -137,7 +137,7 @@ class EqualsTreeSpec extends Specification{
 
     "create a proper equals method" in{
       val tree = EqualsTree("Foo", keys)
-      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case Foo(a, b) => (this.b == that.b) && (this.a == that.a)\n    case _ => false\n  }")
+      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case Foo(a, b) => (this.b == b) && (this.a == a)\n    case _ => false\n  }")
     }
 
     "create a list of one pattern matching argument" in{
@@ -147,7 +147,7 @@ class EqualsTreeSpec extends Specification{
 
     "create a list of one check" in{
       val tree = EqualsTree.withKeys(keys)
-      treeToString(tree) must be_==("(this.b == that.b) && (this.a == that.a)")
+      treeToString(tree) must be_==("(this.b == b) && (this.a == a)")
     }
   }
 
@@ -156,7 +156,7 @@ class EqualsTreeSpec extends Specification{
 
     "create a proper equals method" in{
       val tree = EqualsTree("Foo", keys)
-      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case Foo(a, _) => this.a == that.a\n    case _ => false\n  }")
+      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case Foo(a, _) => this.a == a\n    case _ => false\n  }")
     }
 
     "create a list of one pattern matching argument" in{
@@ -166,7 +166,7 @@ class EqualsTreeSpec extends Specification{
 
     "create a list of one check" in{
       val tree = EqualsTree.withKeys(keys)
-      treeToString(tree) must be_==("this.a == that.a")
+      treeToString(tree) must be_==("this.a == a")
     }
   }
 
@@ -176,7 +176,7 @@ class EqualsTreeSpec extends Specification{
     //TODO: figure out a less ugly way of making this happen, i.e. (((((((((... this ain't lisp
     "create a proper equals method" in{
       val tree = EqualsTree("Foo", columns.toList)
-      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case (x: Foo) => ((((((((((((((((((((((this.a == that.a) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)) && (this.a == that.a)\n    case _ => false\n  }")
+      treeToString(tree) must be_==("override def equals(that: Any) =\n  that match {\n    case (x: Foo) => ((((((((((((((((((((((this.a == x.a) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)) && (this.a == x.a)\n    case _ => false\n  }")
     }
   }
 }
