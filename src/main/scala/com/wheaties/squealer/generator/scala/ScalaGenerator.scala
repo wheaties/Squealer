@@ -28,7 +28,7 @@ import squeryl.SquerylGenerator
 
 //TODO: This is so horribly OO. Really need to think about type classes for the libraries/language combo
 class ScalaGenerator(formato: Formato, gen: LibraryGenerator) extends ((Database,String) => List[Exception]){
-  protected[generator] val basePath = "src" + File.pathSeparator + "main" + File.pathSeparator + "scala"
+  protected[generator] val basePath = "src" + File.separator + "main" + File.separator + "scala"
 
   def apply(db: Database, pack: String) = {
     @tailrec def rollback(in: List[Result[Exception,File]], reasons: List[Exception]): List[Exception] = in match {
@@ -64,11 +64,18 @@ class ScalaGenerator(formato: Formato, gen: LibraryGenerator) extends ((Database
   }
 
   protected[generator] def writeFile(name: String, pack: String, output: String): Result[Exception,File] = {
-    val path = pack.replaceAll("\\.", File.pathSeparator)
-    val fileName = basePath + File.pathSeparator + path + File.pathSeparator + name + ".scala"
+    val path = basePath + File.separator + pack.replaceAll("\\.", File.separator)
+    val fileName = path + File.separator + name + ".scala"
 
     try{
+      val dir = new File(path)
+      if(!dir.exists){
+        dir.mkdirs()
+      }
       val file = new File(fileName)
+      if(!file.exists){
+        file.createNewFile()
+      }
       val writer = new FileWriter(file)
       writer.write(output)
       writer.close()
