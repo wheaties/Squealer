@@ -195,7 +195,7 @@ class HashCodeTreeSpec extends Specification{
 
     "create a proper hashCode method" in{
       val tree = HashCodeTree(keys)
-      treeToString(tree) must be_==("override def hashCode = List(a.hashCode).reduceLeft((left, right) => (left * 17) ^ right)")
+      treeToString(tree) must be_==("override def hashCode = a.hashCode")
     }
   }
 

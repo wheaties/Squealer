@@ -108,8 +108,9 @@ object HashCodeTree extends (List[Column] => Tree){
     }
   }
 
-  private[jdbc] def defineHashCode(hashed: List[SelectStart]):Tree ={
-    LIST(hashed) REDUCELEFT LAMBDA(PARAM(TUPLE(REF("left"), REF("right")))) ==>{
+  private[jdbc] def defineHashCode(hashed: List[SelectStart]):Tree = hashed match{
+    case List(single) => single
+    case _ => LIST(hashed) REDUCELEFT LAMBDA(PARAM(TUPLE(REF("left"), REF("right")))) ==>{
       PAREN(REF("left") INT_* LIT(17)) INFIX("^") APPLY REF("right")
     }
   }
