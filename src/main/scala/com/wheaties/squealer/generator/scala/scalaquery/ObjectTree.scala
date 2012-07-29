@@ -21,7 +21,7 @@ import treehugger.forest._
 import definitions._
 import treehuggerDSL._
 import com.wheaties.squealer.generator.Formato
-import com.wheaties.squealer.db.{StringType, NullablePrimaryKey, NullableColumn, Column}
+import com.wheaties.squealer.db._
 
 /**
  * Creates a ScalaQuery object representing a table in the database.
@@ -30,7 +30,7 @@ object ObjectTree extends ((String,List[Column],Formato) => Tree){
 
   def apply(name: String, columns: List[Column], formato: Formato)={
     declaration(name, columns, formato) := BLOCK{
-      projection(columns) :: columns.map(member(_, formato))
+      projection(columns, formato) :: columns.map(member(_, formato))
     }
   }
 
@@ -43,26 +43,44 @@ object ObjectTree extends ((String,List[Column],Formato) => Tree){
 
   protected[scalaquery] def member(column: Column, formato: Formato)={
     val args = column match{
-      case Column(_, typeOf, Some(default), _, NullableColumn | NullablePrimaryKey) =>
-        val value = if(typeOf == StringType) LIT(default) else REF(default)
-        val defaultDef = LIT(0) INFIX("Default") APPLY(SOME(value))
+      case Column(_, typeOf, Some(default), _, NullablePrimaryKey) =>
+        val value = makeDefaultValue(typeOf, default)
+        val defaultDef = REF("O") INFIX("Default") APPLY(SOME(value))
+        val keyDef = REF("O") POSTFIX("PrimaryKey")
+        keyDef :: defaultDef :: Nil
+      case Column(_, typeOf, Some(default), _, NullableColumn) =>
+        val value = makeDefaultValue(typeOf, default)
+        val defaultDef = REF("O") INFIX("Default") APPLY(SOME(value))
         defaultDef :: Nil
       case Column(_, typeOf, Some(default), _, _) =>
-        val notNull = LIT(0) POSTFIX("NotNull")
-        val value = if(typeOf == StringType) LIT(default) else REF(default)
-        val defaultDef = LIT(0) INFIX("Default") APPLY(value)
+        val value = makeDefaultValue(typeOf, default)
+        val defaultDef = REF("O") INFIX("Default") APPLY(value)
+        val notNull = REF("O") POSTFIX("NotNull")
         notNull :: defaultDef :: Nil
-      case Column(_, _, _, _, NullableColumn | NullablePrimaryKey) => Nil
+      case Column(_, _, _, _, NullablePrimaryKey) =>
+        val keyDef = REF("O") POSTFIX("PrimaryKey")
+        keyDef :: Nil
+      case Column(_, _, _, _, PrimaryKey) =>
+        val keyDef = REF("O") POSTFIX("PrimaryKey")
+        val notNull = REF("O") POSTFIX("NotNull")
+        keyDef :: notNull :: Nil
+      case Column(_, _, _, _, NullableColumn) => Nil
       case _ =>
-        val notNull = LIT(0) POSTFIX("NotNull")
+        val notNull = REF("O") POSTFIX("NotNull")
         notNull :: Nil
     }
 
     DEF(formato.columnName(column.name)) := REF("column") APPLYTYPE(column.typeOf.name) APPLY{ LIT(column.name) :: args }
   }
 
-  protected[scalaquery] def projection(columns: List[Column]) ={
-    val tilde = columns.map(_.name) match{
+  protected[scalaquery] def makeDefaultValue(typeOf: DataType, default: String) = typeOf match{
+    case StringType => LIT(default)
+    case FloatType if default.last.toLower != 'f' => REF(default + "f")
+    case _ => REF(default)
+  }
+
+  protected[scalaquery] def projection(columns: List[Column], formato: Formato) ={
+    val tilde = columns.map(col => formato.columnName(col.name)) match{
       case List(single) => REF(single)
       case multi => INFIX_CHAIN("~", multi.map(REF(_)))
     }

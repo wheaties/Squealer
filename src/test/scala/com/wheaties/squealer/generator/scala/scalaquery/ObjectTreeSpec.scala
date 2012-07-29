@@ -29,12 +29,12 @@ class ObjectTreeSpec extends Specification{
   "projection" should{
 
     "handle one column" in{
-      val tree = ObjectTree.projection(column :: Nil)
+      val tree = ObjectTree.projection(column :: Nil, formato)
       treeToString(tree) must be_==("def * = bar")
     }
 
     "handle multiple columns" in{
-      val tree = ObjectTree.projection(column :: column :: column :: Nil)
+      val tree = ObjectTree.projection(column :: column :: column :: Nil, formato)
       treeToString(tree) must be_==("def * = bar ~ bar ~ bar")
     }
   }
@@ -43,7 +43,7 @@ class ObjectTreeSpec extends Specification{
 
     "handle non-null columns" in{
       val tree = ObjectTree.member(column, formato)
-      treeToString(tree) must be_==("def bar = column[Int](\"bar\", 0 NotNull)")
+      treeToString(tree) must be_==("def bar = column[Int](\"bar\", O NotNull)")
     }
     "handle null columns" in{
       val tree = ObjectTree.member(column.copy(colType = NullableColumn), formato)
@@ -51,22 +51,22 @@ class ObjectTreeSpec extends Specification{
     }
     "handle default columns" in{
       val tree = ObjectTree.member(column.copy(default = Some("1"), colType = NullableColumn), formato)
-      treeToString(tree) must be_==("def bar = column[Int](\"bar\", 0 Default Some(1))")
+      treeToString(tree) must be_==("def bar = column[Int](\"bar\", O Default Some(1))")
     }
     "handle non-null, default columns" in{
       val tree = ObjectTree.member(column.copy(default = Some("1")), formato)
-      treeToString(tree) must be_==("def bar = column[Int](\"bar\", 0 NotNull, 0 Default 1)")
+      treeToString(tree) must be_==("def bar = column[Int](\"bar\", O NotNull, O Default 1)")
     }
   }
 
   "apply" should{
     "produce a table with one column" in{
       val tree = ObjectTree("Foo", column :: Nil, formato)
-      treeToString(tree) must be_==("object Foo extends BasicTable[Int](\"Foo\") {\n  def * = bar\n  def bar = column[Int](\"bar\", 0 NotNull)\n}")
+      treeToString(tree) must be_==("object Foo extends BasicTable[Int](\"Foo\") {\n  def * = bar\n  def bar = column[Int](\"bar\", O NotNull)\n}")
     }
     "produce a table with multiple columns" in{
       val tree = ObjectTree("Foo", column :: column :: column :: Nil, formato)
-      treeToString(tree) must be_==("object Foo extends BasicTable[(Int, Int, Int)](\"Foo\") {\n  def * = bar ~ bar ~ bar\n  def bar = column[Int](\"bar\", 0 NotNull)\n  def bar = column[Int](\"bar\", 0 NotNull)\n  def bar = column[Int](\"bar\", 0 NotNull)\n}")
+      treeToString(tree) must be_==("object Foo extends BasicTable[(Int, Int, Int)](\"Foo\") {\n  def * = bar ~ bar ~ bar\n  def bar = column[Int](\"bar\", O NotNull)\n  def bar = column[Int](\"bar\", O NotNull)\n  def bar = column[Int](\"bar\", O NotNull)\n}")
     }
   }
 }
