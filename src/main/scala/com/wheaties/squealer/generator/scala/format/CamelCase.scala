@@ -21,8 +21,14 @@ import com.wheaties.squealer.generator.Formato
 
 object CamelCase extends Formato{
 
-  def databaseName(name: String) = tableName(name)
-  def tableName(name: String) = format(name).capitalize
+  def databaseName(name: String) ={
+    val segregated = name split("[/:]") match{
+      case Array(single) => single
+      case items if items nonEmpty => items last
+    }
+    segregated format(name)
+  }
+  def tableName(name: String) = format(name) capitalize
   def columnName(name: String) = format(name)
 
   /**

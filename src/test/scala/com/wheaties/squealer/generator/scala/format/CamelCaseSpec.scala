@@ -42,4 +42,10 @@ class CamelCaseSpec extends Specification{
       CamelCase.columnName("columnName") must be_==("columnName")
     }
   }
+
+  "cancelCase (database)" should{
+    "split apart standard db names" in{
+      CamelCase.databaseName("jdbc:mysql://localhost:3306/world") must be_==("world")
+    }
+  }
 }

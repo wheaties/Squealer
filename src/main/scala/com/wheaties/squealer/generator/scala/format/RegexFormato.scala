@@ -20,9 +20,15 @@ package com.wheaties.squealer.generator.scala.format
 import com.wheaties.squealer.generator.Formato
 
 class RegexFormato(regex: String, replaceWith: String) extends Formato{
-  def databaseName(name: String) = tableName(name)
-  def tableName(name: String) = format(name).capitalize
+  def databaseName(name: String) ={
+    val segregated = name split("[/:]") match{
+      case Array(single) => single
+      case items if items nonEmpty => items last
+    }
+    segregated format(name)
+  }
+  def tableName(name: String) = format(name) capitalize
   def columnName(name: String) = format(name)
 
-  protected[squealer] def format(in: String): String = in.replaceAll(regex, replaceWith).replaceAll("\\s", "")
+  protected[squealer] def format(in: String): String = in replaceAll(regex, replaceWith) replaceAll("\\s", "")
 }
