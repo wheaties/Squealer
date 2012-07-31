@@ -53,6 +53,7 @@ object ConstructorTree extends ((String,List[Column],Formato) => ClassDefStart){
     if(params.size < 23) caseStart _ else classStart _
   }
 
+  //TODO: fails for strings, floats
   private[squeryl] def default(params: List[Column], formato: String => String) ={
     def caseDefault(name: String, typeOf: Type, default: String):ValDef ={
       PARAM(formato(name), typeOf) withAnnots(columnAnnot(name)) := REF(default)
@@ -106,11 +107,20 @@ object DefinitionsTree extends (List[Column] => List[Tree]){
     }
   }
 
+  //TODO: there's some D-R-Y in this code
   protected[squeryl] def optionConstructor(columns: List[Column]):Tree ={
     val args = columns map{
       _ match{
-        case Column(_, _, Some(default), _, NullableColumn | NullablePrimaryKey) => SOME(REF(default))
-        case Column(_, _, Some(default), _, _) => REF(default)
+        case Column(_, typeOf, Some(default), _, NullableColumn | NullablePrimaryKey) => typeOf match{
+          case StringType => SOME(LIT(default))
+          case FloatType if !default.endsWith("f") => SOME(REF(default + "f"))
+          case _ => SOME(REF(default))
+        }
+        case Column(_, typeOf, Some(default), _, _) => typeOf match{
+          case StringType => LIT(default)
+          case FloatType if !default.endsWith("f") => REF(default + "f")
+          case _ => REF(default)
+        }
         case Column(_, typeOf, _, _, NullableColumn | NullablePrimaryKey) => SOME(defaultArg(typeOf))
         case Column(_, typeOf, _, _, _) => defaultArg(typeOf)
       }
@@ -126,7 +136,8 @@ object DefinitionsTree extends (List[Column] => List[Tree]){
     case BooleanType => FALSE
     case ClobType => NEW("SerialClob", NEW( TYPE_ARRAY("Char") ))
     case DateType => NEW("Date", LIT(0))
-    case DecimalType | DoubleType | FloatType => LIT(0.0)
+    case DecimalType | DoubleType => LIT(0.0)
+    case FloatType => LIT(0.0f)
     case IntType | ShortType => LIT(0)
     case LongType => LIT(0L)
     case ObjectType | UnknownType => NEW("Any")
