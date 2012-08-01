@@ -31,7 +31,7 @@ object SquerylGenerator extends LibraryGenerator{
       IMPORT("org.squeryl.PrimitiveTypeMode._") ::
       IMPORT("org.squeryl.annotations.Column") :: Nil
     val comments = ScalaDocs(table, formato)
-    val clazz = makeClass(table.name, table.columns, comments, formato)
+    val clazz = makeClass(table.name, table.columns, formato) withComments(comments)
     val block = imports ::: clazz :: Nil
 
     val tree = if(pack.isEmpty){
@@ -44,11 +44,8 @@ object SquerylGenerator extends LibraryGenerator{
     treeToString(tree)
   }
 
-  protected[squeryl] def makeClass(name: String, columns: List[Column], comments: List[String], formato: Formato):ClassDef ={
-    ConstructorTree(name, columns, formato) := BLOCK{
-      DefinitionsTree(columns)
-    } withComments(comments)
-  }
+  protected[squeryl] def makeClass(name: String, columns: List[Column], formato: Formato):ClassDef =
+    ConstructorTree(name, columns, formato) := BLOCK{ DefinitionsTree(columns) }
 
   def writeDatabase(db: Database, pack: String, formato: Formato):String = {
     val imports = IMPORT("org.squeryl.PrimitiveTypeMode._") :: IMPORT("org.squery.Schema") :: Nil

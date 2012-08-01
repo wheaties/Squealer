@@ -17,11 +17,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 package com.wheaties.squealer.generator.scala.squeryl
 
-import com.wheaties.squealer.db._
 import treehugger.forest._
 import definitions._
 import treehuggerDSL._
 import com.wheaties.squealer.generator.Formato
+import com.wheaties.squealer.db._
 
 object ConstructorTree extends ((String,List[Column],Formato) => ClassDefStart){
   def apply(name: String, columns: List[Column], formato: Formato) ={
@@ -53,13 +53,12 @@ object ConstructorTree extends ((String,List[Column],Formato) => ClassDefStart){
     if(params.size < 23) caseStart _ else classStart _
   }
 
-  //TODO: fails for strings, floats
   private[squeryl] def default(params: List[Column], formato: String => String) ={
-    def caseDefault(name: String, typeOf: Type, default: String):ValDef ={
-      PARAM(formato(name), typeOf) withAnnots(columnAnnot(name)) := REF(default)
+    def caseDefault(name: String, typeOf: Type, default: Tree):ValDef ={
+      PARAM(formato(name), typeOf) withAnnots(columnAnnot(name)) := default
     }
-    def classDefault(name: String, typeOf: Type, default: String):ValDef ={
-      VAL(formato(name), typeOf) withAnnots(columnAnnot(name)) := REF(default)
+    def classDefault(name: String, typeOf: Type, default: Tree):ValDef ={
+      VAL(formato(name), typeOf) withAnnots(columnAnnot(name)) := default
     }
 
     if(params.size < 23) caseDefault _ else classDefault _
@@ -70,15 +69,23 @@ object ConstructorTree extends ((String,List[Column],Formato) => ClassDefStart){
     val withDefault = default(params, formato.columnName)
     params.map{
       _ match{
-        case Column(name, typeOf, Some(default), _, ColumnDef | PrimaryKey) => withDefault(name, typeOf.name, default)
+        case Column(name, typeOf, Some(default), _, ColumnDef | PrimaryKey) => withDefault(name, typeOf.name, defaultArg(typeOf, default))
         case Column(name, typeOf, _, _, ColumnDef | PrimaryKey) => start(name, typeOf.name)
         case Column(name, typeOf, _, _, NullableColumn | NullablePrimaryKey) => start(name, TYPE_OPTION(typeOf.name))
       }
     }
   }
 
+  protected[squeryl] def defaultArg(typeOf: DataType, default: String) ={
+    typeOf match{
+      case StringType => LIT(default)
+      case FloatType if !default.endsWith("f") => REF(default + "f")
+      case _ => REF(default)
+    }
+  }
+
   private[squeryl] def keyEntity(columns: List[Column])={
-    val types:List[Type] = columns.flatMap{
+    val types:List[Type] = columns flatMap{
       _ match{
         case Column(_, typeOf, _, _, PrimaryKey) => Some(TYPE_REF(typeOf.name))
         case Column(_, typeOf, _, _, NullablePrimaryKey) => Some(TYPE_OPTION(typeOf.name))
@@ -99,33 +106,38 @@ object ConstructorTree extends ((String,List[Column],Formato) => ClassDefStart){
 object DefinitionsTree extends (List[Column] => List[Tree]){
 
   def apply(columns: List[Column])={
-    if(columns.exists(col => col.colType == PrimaryKey || col.colType == NullablePrimaryKey)){
+    if(columns.exists(_.colType == NullablePrimaryKey)){
       id(columns) :: optionConstructor(columns) :: Nil
     }
-    else{
+    else if(columns.exists(_.colType == PrimaryKey)){
+      id(columns) :: Nil
+    }
+    else if(columns.exists(_.colType == NullableColumn)){
       optionConstructor(columns) :: Nil
+    }
+    else{
+      Nil
     }
   }
 
-  //TODO: there's some D-R-Y in this code
   protected[squeryl] def optionConstructor(columns: List[Column]):Tree ={
     val args = columns map{
       _ match{
-        case Column(_, typeOf, Some(default), _, NullableColumn | NullablePrimaryKey) => typeOf match{
-          case StringType => SOME(LIT(default))
-          case FloatType if !default.endsWith("f") => SOME(REF(default + "f"))
-          case _ => SOME(REF(default))
-        }
-        case Column(_, typeOf, Some(default), _, _) => typeOf match{
-          case StringType => LIT(default)
-          case FloatType if !default.endsWith("f") => REF(default + "f")
-          case _ => REF(default)
-        }
+        case Column(_, typeOf, Some(default), _, NullableColumn | NullablePrimaryKey) => SOME(defaultArg(typeOf, default))
+        case Column(_, typeOf, Some(default), _, _) => defaultArg(typeOf, default)
         case Column(_, typeOf, _, _, NullableColumn | NullablePrimaryKey) => SOME(defaultArg(typeOf))
         case Column(_, typeOf, _, _, _) => defaultArg(typeOf)
       }
     }
     DEFTHIS := THIS APPLY(args)
+  }
+
+  protected[squeryl] def defaultArg(typeOf: DataType, default: String) ={
+    typeOf match{
+      case StringType => LIT(default)
+      case FloatType if !default.endsWith("f") => REF(default + "f")
+      case _ => REF(default)
+    }
   }
 
   //TODO: check mapping against Squeryl

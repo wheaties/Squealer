@@ -31,7 +31,7 @@ class SquerylGeneratorSpec extends Specification{
 
   "makeClass" should{
     val table = Table("foo", None, Column("bar", IntType, None, None, NullablePrimaryKey) :: Nil)
-    val output = SquerylGenerator.makeClass(table.name, table.columns, Nil, formato)
+    val output = SquerylGenerator.makeClass(table.name, table.columns, formato)
 
     "produce a class" in{
       treeToString(output) must contain("class foo")
